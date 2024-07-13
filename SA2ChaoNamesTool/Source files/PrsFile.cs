@@ -35,7 +35,7 @@ namespace SA2ChaoNamesTool
 
             while (true)
             {
-                int pointer = reader.ReadInt32BigEndian();
+                int pointer = reader.ReadInt32(Endianness.BigEndian);
                 if (pointer == -1 || pointer > reader.BaseStream.Length) break;
 
                 pointers.Add(pointer);

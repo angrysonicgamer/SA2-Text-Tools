@@ -2,6 +2,18 @@
 
 namespace SA2EmeraldHintsTool
 {
+    public enum Endianness
+    {
+        BigEndian,
+        LittleEndian,
+    }
+
+    public enum TextConversionMode
+    {
+        Default,
+        Reversed,
+    }
+
     public static class Extensions
     {
         private static readonly Dictionary<string, string> buttonsMap = new Dictionary<string, string>()
@@ -17,11 +29,12 @@ namespace SA2EmeraldHintsTool
             { 'є', 'ё' },
         };
 
-        public static string ReplaceKeyboardButtons(this string text, bool reverse = false)
+
+        public static string ReplaceKeyboardButtons(this string text, TextConversionMode mode = TextConversionMode.Default)
         {
             foreach (var pair in buttonsMap)
             {
-                if (!reverse)
+                if (mode == TextConversionMode.Default)
                     text = text.Replace(pair.Key, pair.Value);
                 else
                     text = text.Replace(pair.Value, pair.Key);
@@ -30,11 +43,11 @@ namespace SA2EmeraldHintsTool
             return text;
         }
 
-        public static string ConvertToModifiedCodepage(this string text, bool reverse = false)
+        public static string ConvertToModifiedCodepage(this string text, TextConversionMode mode = TextConversionMode.Default)
         {
             foreach (var pair in lettersToConvert)
             {
-                if (!reverse)
+                if (mode == TextConversionMode.Default)
                     text = text.Replace(pair.Key, pair.Value);
                 else
                     text = text.Replace(pair.Value, pair.Key);
@@ -43,14 +56,27 @@ namespace SA2EmeraldHintsTool
             return text;
         }
 
-        public static int ReadInt32BigEndian(this BinaryReader reader)
+        public static int ReadInt32(this BinaryReader reader, Endianness endianness)
         {
-            byte[] data = reader.ReadBytes(4);
-            Array.Reverse(data);
-            return BitConverter.ToInt32(data, 0);
+            if (endianness == Endianness.LittleEndian)
+            {
+                return reader.ReadInt32();
+            }
+            else
+            {
+                byte[] data = reader.ReadBytes(4);
+                Array.Reverse(data);
+                return BitConverter.ToInt32(data, 0);
+            }
         }
 
-        public static byte[] ReadBytesUntilNullTerminator(this BinaryReader reader)
+        public static string ReadCString(this BinaryReader reader, Encoding encoding)
+        {
+            return encoding.GetString(reader.ReadBytesUntilNullTerminator());
+        }
+
+
+        private static byte[] ReadBytesUntilNullTerminator(this BinaryReader reader)
         {
             var bytes = new List<byte>();
 
@@ -61,11 +87,6 @@ namespace SA2EmeraldHintsTool
             while (bytes.Last() != 0);
 
             return bytes.ToArray();
-        }
-
-        public static string ReadCString(this BinaryReader reader, Encoding encoding)
-        {
-            return encoding.GetString(reader.ReadBytesUntilNullTerminator());
         }
     }
 }

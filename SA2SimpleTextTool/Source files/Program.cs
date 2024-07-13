@@ -7,8 +7,9 @@ namespace SA2SimpleTextTool
         private static readonly string title = "SA2 Simple Text Tool";
         private static readonly string usage = "Please provide a compressed PRS file to export the data into CSV table and edit it however you want.\n" +
             "By providing a CSV table exported via this tool you can make a new PRS file with new data.\n\n" +
-            "The tool uses CP1251 for European languages and Shift-JIS for Japanese\n" +
-            "Don't use it with emerald / Omochao hints PRS files (starting from \"eh\" or \"mh\") or with event text files as they have different structure.\n";
+            "You can use it with any SA2 text file, except for cutscene text (evmesXY.prs) as it has a different file structure.\n" +
+            "It's not recommended (but technically you can) to use this tool for emerald hints, Omochao message and chao names files, use tools specific for them.\n" +
+            "The tool uses CP1251 encoding for English, CP1252 for other European languages and Shift-JIS for Japanese (checks the last letter in the file name).\n";            
         private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
         private static readonly string noFile = "File not found.\n";
@@ -21,7 +22,7 @@ namespace SA2SimpleTextTool
             if (CheckCondition(args.Length > 1, tooManyArgs + usage)) return;
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
 
-            string fileExtension = GetFileExtension(args[0]);
+            string fileExtension = Path.GetExtension(args[0]);
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -60,11 +61,6 @@ namespace SA2SimpleTextTool
             return false;
         }
 
-        private static string GetFileExtension(string fileName)
-        {
-            return new FileInfo(fileName).Extension;
-        }
-
         private static string GetOutputFileName(string inputFile, string extension)
         {
             return inputFile.Substring(0, inputFile.Length - 4) + extension;
@@ -72,20 +68,23 @@ namespace SA2SimpleTextTool
 
         private static Encoding SetEncoding(string fileName)
         {
-            return Path.GetFileNameWithoutExtension(fileName).Last() == 'j' ? Encoding.GetEncoding(932) : Encoding.GetEncoding(1251);
-        }
+            char language = Path.GetFileNameWithoutExtension(fileName).Last();
+            int codepage;
 
-
-        /// <summary>
-        /// For testing purposes
-        /// </summary>
-        private static void DisplayFileContents(List<string> contents)
-        {
-            foreach (var item in contents)
+            switch (language)
             {
-                Console.WriteLine(item);
+                case 'j':
+                    codepage = 932; // Japanese - Shift-JIS
+                    break;
+                case 'e':
+                    codepage = 1251; // English - CP1251, meant to use for Russian as well
+                    break;
+                default:
+                    codepage = 1252; // other European languages - CP1252
+                    break;
             }
-            Console.ReadKey();
+
+            return Encoding.GetEncoding(codepage);
         }
     }
 }

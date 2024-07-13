@@ -35,7 +35,7 @@ namespace SA2SimpleTextTool
 
             while (true)
             {
-                int pointer = reader.ReadInt32BigEndian();
+                int pointer = reader.ReadInt32(Endianness.BigEndian);
                 if (pointer == -1 || pointer > reader.BaseStream.Length) break;
 
                 pointers.Add(pointer);
@@ -82,7 +82,7 @@ namespace SA2SimpleTextTool
                     text = "\x0";
 
                 if (encoding == Encoding.GetEncoding(1251))
-                    text = text.ConvertToModifiedCodepage(true);
+                    text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
                 cString.AddRange(encoding.GetBytes(text));
                 cString.Add(0);

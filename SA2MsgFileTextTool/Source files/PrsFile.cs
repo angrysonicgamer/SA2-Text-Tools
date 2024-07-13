@@ -36,7 +36,7 @@ namespace SA2MsgFileTextTool
 
             while (true)
             {
-                int pointer = reader.ReadInt32BigEndian();
+                int pointer = reader.ReadInt32(Endianness.BigEndian);
                 if (pointer == -1) break;
 
                 pointers.Add(pointer);
@@ -106,7 +106,7 @@ namespace SA2MsgFileTextTool
                     builder.Append(line.Text);
                 }
 
-                string text = builder.ToString().ReplaceKeyboardButtons(true); 
+                string text = builder.ToString().ReplaceKeyboardButtons(TextConversionMode.Reversed); 
                 combinedStrings.Add(text);
             }
 
@@ -127,7 +127,7 @@ namespace SA2MsgFileTextTool
                     text = "\x0";
 
                 if (encoding == Encoding.GetEncoding(1251))
-                    text = text.ConvertToModifiedCodepage(true);
+                    text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
                 cString.AddRange(encoding.GetBytes(text));
                 cString.Add(0);

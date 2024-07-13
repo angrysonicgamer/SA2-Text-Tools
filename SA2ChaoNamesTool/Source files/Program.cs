@@ -7,13 +7,15 @@ namespace SA2ChaoNamesTool
         private static readonly string title = "SA2 Chao Names Tool";
         private static readonly string usage = "Please provide a compressed PRS file to export the data into .txt file and edit it however you want.\n" +
             "By providing a .txt exported via this tool you can make a new PRS file with new data.\n\n" +
-            "The tool uses CP1251 for European languages and Shift-JIS for Japanese\n" +
-            "Use it ONLY with MsgAlKinderFoName_x.prs files, where x - language\n";
+            "Use it only with MsgAlKinderFoName_X.prs/csv files, where X - language (j/e).\n\n" +
+            "The tool uses custom codepage specific to Chao names\n";            
         private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
         private static readonly string noFile = "File not found.\n";
+        private static readonly string wrongName = "Wrong file name.\nSupported file names: MsgAlKinderFoName_X.prs/csv, where X - language (j/e).\n";
         private static readonly string wrongExtension = "Wrong extension.\nPlease provide a compressed PRS file or a CSV table exported via this tool before.\n";
         private static readonly string longName = "One or more names' length exceeds 7.\nResult file is not created!\nMake sure your Chao names have no more than 7 characters!";
+
 
         public static void Main(string[] args)
         {
@@ -21,6 +23,7 @@ namespace SA2ChaoNamesTool
             if (CheckCondition(args.Length == 0, emptyArgs + usage)) return;
             if (CheckCondition(args.Length > 1, tooManyArgs + usage)) return;
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
+            if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("msgalkinderfoname_"), wrongName)) return;
 
             string fileExtension = GetFileExtension(args[0]);
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".txt", wrongExtension)) return;
@@ -43,7 +46,7 @@ namespace SA2ChaoNamesTool
 
                 string outputFile = GetOutputFileName(args[0], ".prs");
                 PrsFile.Write(outputFile, fileContents);
-                Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created!");
+                Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created! You can use it in your mod!");
             }
         }
 

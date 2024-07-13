@@ -2,16 +2,42 @@
 
 namespace SA2ChaoNamesTool
 {
+    public enum Endianness
+    {
+        BigEndian,
+        LittleEndian,
+    }
+
+    public enum TextConversionMode
+    {
+        Default,
+        Reversed,
+    }
+
     public static class Extensions
     {
-        public static int ReadInt32BigEndian(this BinaryReader reader)
+        public static int ReadInt32(this BinaryReader reader, Endianness endianness)
         {
-            byte[] data = reader.ReadBytes(4);
-            Array.Reverse(data);
-            return BitConverter.ToInt32(data, 0);
+            if (endianness == Endianness.LittleEndian)
+            {
+                return reader.ReadInt32();
+            }
+            else
+            {
+                byte[] data = reader.ReadBytes(4);
+                Array.Reverse(data);
+                return BitConverter.ToInt32(data, 0);
+            }
         }
 
-        public static byte[] ReadBytesUntilNullTerminator(this BinaryReader reader)
+        public static string ReadChaoName(this BinaryReader reader)
+        {
+            var bytes = reader.ReadBytesUntilNullTerminator();
+            return TextConversion.ToString(bytes);
+        }
+
+
+        private static byte[] ReadBytesUntilNullTerminator(this BinaryReader reader)
         {
             var bytes = new List<byte>();
 
@@ -22,12 +48,6 @@ namespace SA2ChaoNamesTool
             while (bytes.Last() != 0);
 
             return bytes.ToArray();
-        }
-
-        public static string ReadChaoName(this BinaryReader reader)
-        {
-            var bytes = reader.ReadBytesUntilNullTerminator();
-            return TextConversion.ToString(bytes);
         }
     }
 }

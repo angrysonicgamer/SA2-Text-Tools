@@ -5,6 +5,8 @@ namespace SA2CutsceneTextTool
 {
     public static class PrsFile
     {
+        private static readonly Encoding cyrillic = Encoding.GetEncoding(1251);
+        
         public static List<List<CsvEventData>> Read(string inputFile, Encoding encoding)
         {
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
@@ -39,11 +41,11 @@ namespace SA2CutsceneTextTool
 
             while (true)
             {
-                int eventID = reader.ReadInt32BigEndian();
+                int eventID = reader.ReadInt32(Endianness.BigEndian);
                 if (eventID == -1) break;
 
-                uint textDataPtr = reader.ReadUInt32BigEndian();
-                int totalLines = reader.ReadInt32BigEndian();                
+                uint textDataPtr = reader.ReadUInt32(Endianness.BigEndian);
+                int totalLines = reader.ReadInt32(Endianness.BigEndian);                
 
                 header.Add(new EventHeader(eventID, textDataPtr - Pointer.BaseAddress, totalLines));
             }
@@ -62,20 +64,20 @@ namespace SA2CutsceneTextTool
 
                 if (eventData.TotalLines == 0)
                 {
-                    int character = reader.ReadInt32BigEndian();
+                    int character = reader.ReadInt32(Endianness.BigEndian);
                     textData.Add(new Message(character, ""));
                 }
 
                 for (int i = 0; i < eventData.TotalLines; i++)
                 {
                     
-                    int character = reader.ReadInt32BigEndian();
-                    uint textOffset = reader.ReadUInt32BigEndian() - Pointer.BaseAddress;
+                    int character = reader.ReadInt32(Endianness.BigEndian);
+                    uint textOffset = reader.ReadUInt32(Endianness.BigEndian) - Pointer.BaseAddress;
                     long offsetPosition = reader.BaseStream.Position;
                     reader.BaseStream.Position = textOffset;
                     string text = reader.ReadCString(encoding);
 
-                    if (encoding == Encoding.GetEncoding(1251))
+                    if (encoding == cyrillic)
                         text = text.ConvertToModifiedCodepage();
 
                     reader.BaseStream.Position = offsetPosition;
@@ -99,7 +101,7 @@ namespace SA2CutsceneTextTool
                 foreach (var line in entry.Value)
                 {
                     string centered = line.Text.StartsWith('\a') ? "+" : "";
-                    string text = line.Text.StartsWith('\a') ? line.Text.Substring(1) : line.Text;
+                    string text = centered == "+" ? line.Text.Substring(1) : line.Text;
                     entryData.Add(new CsvEventData(entry.Key.ToString(), line.Character.ToString(), centered, text));
                 }
 
@@ -122,8 +124,8 @@ namespace SA2CutsceneTextTool
                 {
                     string text = line.Text;
 
-                    if (encoding == Encoding.GetEncoding(1251))
-                        text = text.ConvertToModifiedCodepage(true);
+                    if (encoding == cyrillic)
+                        text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
                     var textBytes = new List<byte>();
                     textBytes.AddRange(encoding.GetBytes(text));

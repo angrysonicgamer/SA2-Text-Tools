@@ -4,24 +4,17 @@ namespace SA2EmeraldHintsTool
 {
     public static class Program
     {
-        private static readonly string title = "SA2 Emerald Hints Thing";
-        private static readonly string usage =
-            "---ABOUT---\n" +
-            "This little tool is meant to work with Sonic Adventure 2 emerald hints.\n" +
-            "You can easily extract them into a csv file, edit and convert them back.\n" +
-            "Might be useful for (re)translation mods. 2P treasure hunting will also work as well.\n" +
-            "Don't use the tool with other .prs files like Omochao hints (mh00**e.prs), etc.\n" +
-            "---USAGE---\n" +
-            "Drag and drop an ORIGINAL PC version eh00**e.prs file on the exe file (or type sa2emeraldhints eh00**e.prs), a csv file of the same name will be created.\n" +
-            "Drag and drop the csv file on the exe file (or type sa2emeraldhints eh00**e.csv), a new file named eh00**e_new.prs will be created.\n" +
-            "That file is ready to use in your mod, don't forget to remove the \"_new\" part.\n\n" +
-            "This little thing is written by Irregular Zero.";
+        private static readonly string title = "SA2 Emerald Hints Tool";
+        private static readonly string usage = "Please provide a compressed PRS file to export the data into CSV table and edit it however you want.\n" +
+            "By providing a CSV table exported via this tool you can make a new PRS file with new data.\n\n" +
+            "Use it only for emerald hint files (eh00XXy.prs/csv), where XX - stage ID, y - language (j/e/f/s/g/i).\n\n" +
+            "The tool uses CP1251 encoding for English, CP1252 for other European languages and Shift-JIS for Japanese (checks the last letter in the file name).\n";
         private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
         private static readonly string noFile = "File not found.\n";
-        private static readonly string wrongExtension =
-            "You have attempted to open a file with not supported extension.\n" +
-            "Please use an emerald hints .prs file or a .csv file previously created by this tool.\n";
+        private static readonly string wrongName = "Wrong file name.\nSupported file names: eh00XXy.prs/csv, where XX - stage ID, y - language (j/e/f/s/g/i).\n";
+        private static readonly string wrongExtension = "Wrong extension.\nPlease provide a compressed PRS file or a CSV table exported via this tool before.\n";
+
 
         public static void Main(string[] args)
         {
@@ -29,8 +22,9 @@ namespace SA2EmeraldHintsTool
             if (CheckCondition(args.Length == 0, emptyArgs + usage)) return;
             if (CheckCondition(args.Length > 1, tooManyArgs + usage)) return;
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
+            if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("eh00"), wrongName)) return;
 
-            string fileExtension = GetFileExtension(args[0]);
+            string fileExtension = Path.GetExtension(args[0]);
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -48,7 +42,7 @@ namespace SA2EmeraldHintsTool
                 var fileContents = CsvFile.Read(args[0]);
                 string outputFile = GetOutputFileName(args[0], ".prs");
                 PrsFile.Write(outputFile, fileContents, encoding);
-                Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created!");
+                Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created! You can use it in your mod!");
             }
         }
 
@@ -69,11 +63,6 @@ namespace SA2EmeraldHintsTool
             return false;
         }
 
-        private static string GetFileExtension(string fileName)
-        {
-            return new FileInfo(fileName).Extension;
-        }
-
         private static string GetOutputFileName(string inputFile, string extension)
         {
             return inputFile.Substring(0, inputFile.Length - 4) + extension;
@@ -81,23 +70,23 @@ namespace SA2EmeraldHintsTool
 
         private static Encoding SetEncoding(string fileName)
         {
-            return Path.GetFileNameWithoutExtension(fileName).Last() == 'j' ? Encoding.GetEncoding(932) : Encoding.GetEncoding(1251);
-        }
+            char language = Path.GetFileNameWithoutExtension(fileName).Last();
+            int codepage;
 
-
-        /// <summary>
-        /// For testing purposes
-        /// </summary>
-        private static void DisplayFileContents(List<CsvEmeraldHintData> contents, Encoding encoding)
-        {
-            Console.OutputEncoding = encoding;
-            
-            foreach (var item in contents)
+            switch (language)
             {
-                Console.WriteLine($"{item.Flag2P} --- {item.Text}");
+                case 'j':
+                    codepage = 932; // Japanese - Shift-JIS
+                    break;
+                case 'e':
+                    codepage = 1251; // English - CP1251, meant to use for Russian as well
+                    break;
+                default:
+                    codepage = 1252; // other European languages - CP1252
+                    break;
             }
 
-            Console.ReadKey();
+            return Encoding.GetEncoding(codepage);
         }
     }
 }

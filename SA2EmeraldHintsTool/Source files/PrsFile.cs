@@ -35,7 +35,7 @@ namespace SA2EmeraldHintsTool
 
             while (true)
             {
-                int pointer = reader.ReadInt32BigEndian();
+                int pointer = reader.ReadInt32(Endianness.BigEndian);
                 if (pointer == -1) break;
 
                 pointers.Add(pointer);
@@ -85,7 +85,7 @@ namespace SA2EmeraldHintsTool
                     text = "\x0";
 
                 if (encoding == Encoding.GetEncoding(1251))
-                    text = text.ConvertToModifiedCodepage(true);
+                    text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
                 cString.AddRange(controls);
 
