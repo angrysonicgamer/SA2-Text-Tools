@@ -5,14 +5,14 @@
         public static uint BaseAddress = 0x817AFE60;
     }
     
-    public struct EventHeader
+    public struct Cutscene
     {
         public int EventID { get; set; }
         public uint MessagePointer { get; set; }
         public int TotalLines { get; set; }
         public static uint Size => 12;
 
-        public EventHeader(int id, uint offset, int total)
+        public Cutscene(int id, uint offset, int total)
         {
             EventID = id;
             MessagePointer = offset;
@@ -30,18 +30,6 @@
         {
             Character = character;
             Text = text;
-        }
-    }
-
-    public struct Message_WPtr
-    {
-        public int Character { get; set; }
-        public uint TextPointer { get; set; }
-
-        public Message_WPtr(int character, uint pointer)
-        {
-            Character = character;
-            TextPointer = pointer; ;
         }
     }
 

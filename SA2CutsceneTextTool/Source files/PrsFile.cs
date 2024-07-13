@@ -20,23 +20,21 @@ namespace SA2CutsceneTextTool
             return csvData;
         }
 
-        public static void Write(string outputFile, Dictionary<int, List<Message>> cutsceneTextData, Encoding encoding)
+        public static void Write(string outputFile, Dictionary<int, List<Message>> eventData, Encoding encoding)
         {
-            var strings = GetCStrings(cutsceneTextData, encoding);
-            var textPointers = CalculateTextPointers(strings, cutsceneTextData);
-            var dataPointers = CalculateDataPointers(cutsceneTextData);
-            var header = CalculateHeader(cutsceneTextData, dataPointers);
-            var textData = CalculateTextData(cutsceneTextData, textPointers);
-            var contents = MergeContents(header, textData, strings);
+            var strings = GetCStrings(eventData, encoding);
+            var header = CalculateHeader(eventData);
+            var messageData = CalculateMessageData(eventData);
+            var contents = MergeContents(header, messageData, strings);
             File.WriteAllBytes(outputFile, Prs.Compress(contents, 0x1FFF));
         }
 
 
         // PRS file reading
 
-        private static List<EventHeader> ReadHeader(this BinaryReader reader)
+        private static List<Cutscene> ReadHeader(this BinaryReader reader)
         {
-            var header = new List<EventHeader>();
+            var header = new List<Cutscene>();
 
             while (true)
             {
@@ -46,7 +44,7 @@ namespace SA2CutsceneTextTool
                 uint messagePointer = reader.ReadUInt32(Endianness.BigEndian);
                 int totalLines = reader.ReadInt32(Endianness.BigEndian);                
 
-                header.Add(new EventHeader(eventID, messagePointer, totalLines));
+                header.Add(new Cutscene(eventID, messagePointer, totalLines));
             }
 
             return header;
@@ -57,18 +55,18 @@ namespace SA2CutsceneTextTool
             var header = reader.ReadHeader();
             var eventData = new Dictionary<int, List<Message>>();
 
-            foreach (var entry in header)
+            foreach (var scene in header)
             {
                 var messages = new List<Message>();
-                reader.BaseStream.Position = entry.MessagePointer - Pointer.BaseAddress;
+                reader.BaseStream.Position = scene.MessagePointer - Pointer.BaseAddress;
 
-                if (entry.TotalLines == 0)
+                if (scene.TotalLines == 0)
                 {
                     int character = reader.ReadInt32(Endianness.BigEndian);
                     messages.Add(new Message(character, ""));
                 }
 
-                for (int i = 0; i < entry.TotalLines; i++)
+                for (int i = 0; i < scene.TotalLines; i++)
                 {
                     int character = reader.ReadInt32(Endianness.BigEndian);
                     uint textOffset = reader.ReadUInt32(Endianness.BigEndian) - Pointer.BaseAddress;
@@ -84,28 +82,28 @@ namespace SA2CutsceneTextTool
                     messages.Add(new Message(character, text));
                 }
 
-                eventData.Add(entry.EventID, messages);
+                eventData.Add(scene.EventID, messages);
             }
 
             return eventData;
         }
 
-        private static List<List<CsvEventData>> GenerateCsvData(Dictionary<int, List<Message>> cutsceneTextData)
+        private static List<List<CsvEventData>> GenerateCsvData(Dictionary<int, List<Message>> eventData)
         {
             var csvData = new List<List<CsvEventData>>();
 
-            foreach (var entry in cutsceneTextData.OrderBy(x => x.Key))
+            foreach (var scene in eventData.OrderBy(x => x.Key))
             {
-                var entryData = new List<CsvEventData>();
+                var messageData = new List<CsvEventData>();
 
-                foreach (var line in entry.Value)
+                foreach (var message in scene.Value)
                 {
-                    string centered = line.Text.StartsWith('\a') ? "+" : "";
-                    string text = centered == "+" ? line.Text.Substring(1) : line.Text;
-                    entryData.Add(new CsvEventData(entry.Key.ToString(), line.Character.ToString(), centered, text));
+                    string centered = message.Text.StartsWith('\a') ? "+" : "";
+                    string text = centered == "+" ? message.Text.Substring(1) : message.Text;
+                    messageData.Add(new CsvEventData(scene.Key.ToString(), message.Character.ToString(), centered, text));
                 }
 
-                csvData.Add(entryData);
+                csvData.Add(messageData);
             }
 
             return csvData;
@@ -120,9 +118,9 @@ namespace SA2CutsceneTextTool
 
             foreach (var entry in eventData)
             {
-                foreach (var line in entry.Value)
+                foreach (var message in entry.Value)
                 {
-                    string text = encoding == cyrillic ? line.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : line.Text;
+                    string text = encoding == cyrillic ? message.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : message.Text;
                     var textBytes = new List<byte>();
                     textBytes.AddRange(encoding.GetBytes(text));
                     textBytes.Add(0);
@@ -133,89 +131,69 @@ namespace SA2CutsceneTextTool
             return cStrings;
         }
 
-        private static List<uint> CalculateTextPointers(List<byte[]> cStrings, Dictionary<int, List<Message>> eventData)
+        private static List<Cutscene> CalculateHeader(Dictionary<int, List<Message>> eventData)
         {
             uint separatorLength = 12;
-            uint offset = EventHeader.Size * (uint)eventData.Count + separatorLength + Message.Size * (uint)cStrings.Count + Pointer.BaseAddress;
-            var pointers = new List<uint>();
+            uint pointer = Cutscene.Size * (uint)eventData.Count + separatorLength + Pointer.BaseAddress;
+            var header = new List<Cutscene>();
 
-            foreach (var line in cStrings)
+            foreach (var (eventID, messageList) in eventData)
             {
-                pointers.Add(offset);
-                offset += (uint)line.Length;
-            }
+                int messagesCount = messageList.Count;
 
-            return pointers;
-        }
+                if (messagesCount == 0)
+                    messagesCount = 1;
 
-        private static List<uint> CalculateDataPointers(Dictionary<int, List<Message>> cutsceneTextData)
-        {
-            uint offset = 12 * (uint)cutsceneTextData.Count + 12 + Pointer.BaseAddress;
-            var pointers = new List<uint>();
-
-            foreach (var entry in cutsceneTextData)
-            {
-                pointers.Add(offset);
-                int count = entry.Value.Count;
-
-                if (count == 0)
-                    count = 1;
-
-                offset += (uint)count * 8;
-            }
-
-            return pointers;
-        }
-
-        private static List<EventHeader> CalculateHeader(Dictionary<int, List<Message>> cutsceneTextData, List<uint> dataPointers)
-        {
-            var header = new List<EventHeader>();
-            int index = 0;
-
-            foreach (var entry in cutsceneTextData)
-            {
-                header.Add(new EventHeader(entry.Key, dataPointers[index], entry.Value.Count));
-                index++;
+                header.Add(new Cutscene(eventID, pointer, messagesCount));
+                pointer += (uint)messagesCount * Message.Size;
             }
 
             return header;
         }
 
-        private static List<Message_WPtr> CalculateTextData(Dictionary<int, List<Message>> cutsceneTextData, List<uint> textPointers)
+        private static List<(Message, uint)> CalculateMessageData(Dictionary<int, List<Message>> eventData)
         {
-            var textData = new List<Message_WPtr>();
-            int index = 0;
+            int totalMessagesCount = 0;
 
-            foreach (var entry in cutsceneTextData)
+            foreach (var (eventID, messageList) in eventData)
             {
-                foreach (var data in entry.Value)
+                totalMessagesCount += messageList.Count;
+            }
+
+            uint separatorLength = 12;
+            uint textPointer = Cutscene.Size * (uint)eventData.Count + separatorLength + Message.Size * (uint)totalMessagesCount + Pointer.BaseAddress;
+            var messageData = new List<(Message, uint)>();
+            
+            foreach (var (eventID, messageList) in eventData)
+            {
+                foreach (var message in messageList)
                 {
-                    textData.Add(new Message_WPtr(data.Character, textPointers[index]));
-                    index++;
+                    messageData.Add((message, textPointer));
+                    textPointer += (uint)message.Text.Length + 1;
                 }
             }
 
-            return textData;
+            return messageData;
         }
 
-        private static byte[] MergeContents(List<EventHeader> header, List<Message_WPtr> textData, List<byte[]> strings)
+        private static byte[] MergeContents(List<Cutscene> header, List<(Message, uint)> messageData, List<byte[]> strings)
         {
             var contents = new List<byte>();
 
-            foreach (var entry in header)
+            foreach (var scene in header)
             {
-                contents.AddRange(BitConverter.GetBytes(entry.EventID).Reverse());
-                contents.AddRange(BitConverter.GetBytes(entry.MessagePointer).Reverse());
-                contents.AddRange(BitConverter.GetBytes(entry.TotalLines).Reverse());
+                contents.AddRange(BitConverter.GetBytes(scene.EventID).Reverse());
+                contents.AddRange(BitConverter.GetBytes(scene.MessagePointer).Reverse());
+                contents.AddRange(BitConverter.GetBytes(scene.TotalLines).Reverse());
             }
 
             contents.AddRange(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF });
             contents.AddRange(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
 
-            foreach (var entry in textData)
+            foreach (var (message, textPointer) in messageData)
             {
-                contents.AddRange(BitConverter.GetBytes(entry.Character).Reverse());
-                contents.AddRange(BitConverter.GetBytes(entry.TextPointer).Reverse());
+                contents.AddRange(BitConverter.GetBytes(message.Character).Reverse());
+                contents.AddRange(BitConverter.GetBytes(textPointer).Reverse());
             }
 
             foreach (var line in strings)
