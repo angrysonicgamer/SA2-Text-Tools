@@ -5,6 +5,8 @@ namespace SA2SimpleTextTool
 {
     public static class PrsFile
     {
+        private static readonly Encoding cyrillic = Encoding.GetEncoding(1251);
+
         public static List<string> Read(string inputFile, Encoding encoding)
         {
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
@@ -53,7 +55,7 @@ namespace SA2SimpleTextTool
                 reader.BaseStream.Position = pointer;
                 string stringAtAddress = reader.ReadCString(encoding);
 
-                if (encoding == Encoding.GetEncoding(1251))
+                if (encoding == cyrillic)
                     stringAtAddress = stringAtAddress.ConvertToModifiedCodepage();
 
                 if (stringAtAddress.StartsWith('\x0'))
@@ -81,7 +83,7 @@ namespace SA2SimpleTextTool
                 if (text == "{null}")
                     text = "\x0";
 
-                if (encoding == Encoding.GetEncoding(1251))
+                if (encoding == cyrillic)
                     text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
                 cString.AddRange(encoding.GetBytes(text));

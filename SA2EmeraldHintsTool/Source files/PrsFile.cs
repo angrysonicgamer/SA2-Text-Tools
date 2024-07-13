@@ -5,6 +5,8 @@ namespace SA2EmeraldHintsTool
 {
     public static class PrsFile
     {
+        private static readonly Encoding cyrillic = Encoding.GetEncoding(1251);
+
         public static List<CsvEmeraldHintData> Read(string inputFile, Encoding encoding)
         {
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
@@ -53,7 +55,7 @@ namespace SA2EmeraldHintsTool
                 reader.BaseStream.Position = pointer;
                 string contentsAtAddress = reader.ReadCString(encoding).ReplaceKeyboardButtons();
 
-                if (encoding == Encoding.GetEncoding(1251))
+                if (encoding == cyrillic)
                     contentsAtAddress = contentsAtAddress.ConvertToModifiedCodepage();
 
                 string flag2p = contentsAtAddress[1] == 'D' ? "+" : "";
@@ -84,7 +86,7 @@ namespace SA2EmeraldHintsTool
                 if (text == "{null}")
                     text = "\x0";
 
-                if (encoding == Encoding.GetEncoding(1251))
+                if (encoding == cyrillic)
                     text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
                 cString.AddRange(controls);

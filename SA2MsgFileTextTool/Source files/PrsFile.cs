@@ -5,6 +5,8 @@ namespace SA2MsgFileTextTool
 {
     public static class PrsFile
     {
+        private static readonly Encoding cyrillic = Encoding.GetEncoding(1251);
+
         public static List<List<CsvMessageData>> Read(string inputFile, Encoding encoding)
         {
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
@@ -55,7 +57,7 @@ namespace SA2MsgFileTextTool
                 reader.BaseStream.Position = pointer;
                 string contentsAtAddress = reader.ReadCString(encoding).ReplaceKeyboardButtons();
 
-                if (encoding == Encoding.GetEncoding(1251))
+                if (encoding == cyrillic)
                     contentsAtAddress = contentsAtAddress.ConvertToModifiedCodepage();
 
                 string[] blocks = contentsAtAddress.Split(new char[] { '\xC' }, StringSplitOptions.RemoveEmptyEntries);
@@ -126,7 +128,7 @@ namespace SA2MsgFileTextTool
                 if (text == "{null}")
                     text = "\x0";
 
-                if (encoding == Encoding.GetEncoding(1251))
+                if (encoding == cyrillic)
                     text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
                 cString.AddRange(encoding.GetBytes(text));
