@@ -13,10 +13,9 @@ namespace SA2CutsceneTextTool
 
             var stream = new MemoryStream(decompressedFile);
             var reader = new BinaryReader(stream);
-
-            var header = reader.ReadHeader();
-            var textData = reader.ReadTextData(header, encoding);
-            var csvData = GenerateCsvData(textData);
+            
+            var eventData = reader.ReadEventData(encoding);
+            var csvData = GenerateCsvData(eventData);
 
             return csvData;
         }
@@ -44,50 +43,51 @@ namespace SA2CutsceneTextTool
                 int eventID = reader.ReadInt32(Endianness.BigEndian);
                 if (eventID == -1) break;
 
-                uint textDataPtr = reader.ReadUInt32(Endianness.BigEndian);
+                uint messagePointer = reader.ReadUInt32(Endianness.BigEndian);
                 int totalLines = reader.ReadInt32(Endianness.BigEndian);                
 
-                header.Add(new EventHeader(eventID, textDataPtr - Pointer.BaseAddress, totalLines));
+                header.Add(new EventHeader(eventID, messagePointer, totalLines));
             }
 
             return header;
         }
 
-        private static Dictionary<int, List<Message>> ReadTextData(this BinaryReader reader, List<EventHeader> header, Encoding encoding)
+        private static Dictionary<int, List<Message>> ReadEventData(this BinaryReader reader, Encoding encoding)
         {
-            var cutsceneTextData = new Dictionary<int, List<Message>>();
+            var header = reader.ReadHeader();
+            var eventData = new Dictionary<int, List<Message>>();
 
-            foreach (var eventData in header)
+            foreach (var entry in header)
             {
-                var textData = new List<Message>();
-                reader.BaseStream.Position = eventData.TextDataOffset;
+                var messages = new List<Message>();
+                reader.BaseStream.Position = entry.MessagePointer - Pointer.BaseAddress;
 
-                if (eventData.TotalLines == 0)
+                if (entry.TotalLines == 0)
                 {
                     int character = reader.ReadInt32(Endianness.BigEndian);
-                    textData.Add(new Message(character, ""));
+                    messages.Add(new Message(character, ""));
                 }
 
-                for (int i = 0; i < eventData.TotalLines; i++)
+                for (int i = 0; i < entry.TotalLines; i++)
                 {
-                    
                     int character = reader.ReadInt32(Endianness.BigEndian);
                     uint textOffset = reader.ReadUInt32(Endianness.BigEndian) - Pointer.BaseAddress;
-                    long offsetPosition = reader.BaseStream.Position;
+
+                    long currentPosition = reader.BaseStream.Position;
                     reader.BaseStream.Position = textOffset;
                     string text = reader.ReadCString(encoding);
 
                     if (encoding == cyrillic)
                         text = text.ConvertToModifiedCodepage();
 
-                    reader.BaseStream.Position = offsetPosition;
-                    textData.Add(new Message(character, text));
+                    reader.BaseStream.Position = currentPosition;
+                    messages.Add(new Message(character, text));
                 }
 
-                cutsceneTextData.Add(eventData.EventID, textData);
+                eventData.Add(entry.EventID, messages);
             }
 
-            return cutsceneTextData;
+            return eventData;
         }
 
         private static List<List<CsvEventData>> GenerateCsvData(Dictionary<int, List<Message>> cutsceneTextData)
@@ -114,19 +114,15 @@ namespace SA2CutsceneTextTool
 
         // Writing PRS file
 
-        private static List<byte[]> GetCStrings(Dictionary<int, List<Message>> cutsceneTextData, Encoding encoding)
+        private static List<byte[]> GetCStrings(Dictionary<int, List<Message>> eventData, Encoding encoding)
         {
             var cStrings = new List<byte[]>();
 
-            foreach (var entry in cutsceneTextData)
+            foreach (var entry in eventData)
             {
                 foreach (var line in entry.Value)
                 {
-                    string text = line.Text;
-
-                    if (encoding == cyrillic)
-                        text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
-
+                    string text = encoding == cyrillic ? line.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : line.Text;
                     var textBytes = new List<byte>();
                     textBytes.AddRange(encoding.GetBytes(text));
                     textBytes.Add(0);
@@ -137,9 +133,10 @@ namespace SA2CutsceneTextTool
             return cStrings;
         }
 
-        private static List<uint> CalculateTextPointers(List<byte[]> cStrings, Dictionary<int, List<Message>> cutsceneTextData)
+        private static List<uint> CalculateTextPointers(List<byte[]> cStrings, Dictionary<int, List<Message>> eventData)
         {
-            uint offset = 12 * (uint)cutsceneTextData.Count + 12 + 8 * (uint)cStrings.Count + Pointer.BaseAddress;
+            uint separatorLength = 12;
+            uint offset = EventHeader.Size * (uint)eventData.Count + separatorLength + Message.Size * (uint)cStrings.Count + Pointer.BaseAddress;
             var pointers = new List<uint>();
 
             foreach (var line in cStrings)
@@ -208,7 +205,7 @@ namespace SA2CutsceneTextTool
             foreach (var entry in header)
             {
                 contents.AddRange(BitConverter.GetBytes(entry.EventID).Reverse());
-                contents.AddRange(BitConverter.GetBytes(entry.TextDataOffset).Reverse());
+                contents.AddRange(BitConverter.GetBytes(entry.MessagePointer).Reverse());
                 contents.AddRange(BitConverter.GetBytes(entry.TotalLines).Reverse());
             }
 

@@ -118,7 +118,8 @@ namespace SA2MsgFileTextTool
         private static List<CStyleText> GetCStringsAndPointers(List<string> strings, Encoding encoding)
         {
             var cText = new List<CStyleText>();
-            int offset = sizeof(int) * strings.Count + sizeof(int);
+            int separatorLength = 4;
+            int offset = sizeof(int) * strings.Count + separatorLength;
 
             foreach (var line in strings)
             {

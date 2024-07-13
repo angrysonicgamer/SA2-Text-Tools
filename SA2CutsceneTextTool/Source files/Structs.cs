@@ -8,13 +8,14 @@
     public struct EventHeader
     {
         public int EventID { get; set; }
-        public uint TextDataOffset { get; set; }
+        public uint MessagePointer { get; set; }
         public int TotalLines { get; set; }
+        public static uint Size => 12;
 
         public EventHeader(int id, uint offset, int total)
         {
             EventID = id;
-            TextDataOffset = offset;
+            MessagePointer = offset;
             TotalLines = total;
         }
     }
@@ -23,6 +24,7 @@
     {
         public int Character { get; set; }
         public string Text { get; set; }
+        public static uint Size => 8;
 
         public Message(int character, string text)
         {

@@ -1,4 +1,5 @@
 ﻿using csharp_prs;
+using Microsoft.VisualBasic;
 using System.Text;
 
 namespace SA2EmeraldHintsTool
@@ -75,7 +76,8 @@ namespace SA2EmeraldHintsTool
         private static List<CStyleText> GetCStringsAndPointers(List<CsvEmeraldHintData> hints, Encoding encoding)
         {
             var cText = new List<CStyleText>();
-            int offset = sizeof(int) * hints.Count + sizeof(int);
+            int separatorLength = 4;
+            int offset = sizeof(int) * hints.Count + separatorLength;
 
             foreach (var hint in hints)
             {

@@ -64,7 +64,8 @@ namespace SA2ChaoNamesTool
         private static List<CStyleText> GetCStringsAndPointers(string[] strings)
         {
             var cText = new List<CStyleText>();
-            int offset = sizeof(int) * strings.Length + sizeof(int);
+            int separatorLength = 4;
+            int offset = sizeof(int) * strings.Length + separatorLength;
 
             foreach (var line in strings)
             {

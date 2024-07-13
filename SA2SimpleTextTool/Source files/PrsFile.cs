@@ -7,7 +7,7 @@ namespace SA2SimpleTextTool
     {
         private static readonly Encoding cyrillic = Encoding.GetEncoding(1251);
 
-        public static List<string> Read(string inputFile, Encoding encoding)
+        public static List<CsvData> Read(string inputFile, Encoding encoding)
         {
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
 
@@ -46,22 +46,25 @@ namespace SA2SimpleTextTool
             return pointers;
         }
 
-        private static List<string> ReadContents(this BinaryReader reader, List<int> pointers, Encoding encoding)
+        private static List<CsvData> ReadContents(this BinaryReader reader, List<int> pointers, Encoding encoding)
         {
-            var stringsList = new List<string>();
+            var stringsList = new List<CsvData>();
 
             foreach (var pointer in pointers)
             {
                 reader.BaseStream.Position = pointer;
-                string stringAtAddress = reader.ReadCString(encoding);
+                string text = reader.ReadCString(encoding);
+
+                string centered = text.StartsWith('\a') ? "+" : "";
+                text = text.StartsWith('\a') ? text.Substring(1) : text;
 
                 if (encoding == cyrillic)
-                    stringAtAddress = stringAtAddress.ConvertToModifiedCodepage();
+                    text = text.ConvertToModifiedCodepage();
 
-                if (stringAtAddress.StartsWith('\x0'))
-                    stringAtAddress = "{null}";
+                if (text.StartsWith('\x0'))
+                    text = "{null}";
 
-                stringsList.Add(stringAtAddress);
+                stringsList.Add(new CsvData(centered, text));
             }
 
             return stringsList;
@@ -73,7 +76,8 @@ namespace SA2SimpleTextTool
         private static List<CStyleText> GetCStringsAndPointers(List<string> strings, Encoding encoding)
         {
             var cText = new List<CStyleText>();
-            int offset = sizeof(int) * strings.Count + sizeof(int);
+            int separatorLength = 4;
+            int offset = sizeof(int) * strings.Count + separatorLength;
 
             foreach (var line in strings)
             {

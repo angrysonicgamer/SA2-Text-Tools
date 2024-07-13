@@ -32,9 +32,9 @@ namespace SA2CutsceneTextTool
 
             if (fileExtension == ".prs")
             {
-                var cutsceneTextData = PrsFile.Read(args[0], encoding);
+                var eventData = PrsFile.Read(args[0], encoding);
                 string outputFile = GetOutputFileName(args[0], ".csv");
-                CsvFile.Write(outputFile, cutsceneTextData);
+                CsvFile.Write(outputFile, eventData);
                 Console.WriteLine($"CSV file \"{Path.GetFileName(outputFile)}\" successfully created!");
             }
             else // if .csv

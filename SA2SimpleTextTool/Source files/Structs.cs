@@ -2,10 +2,12 @@
 {
     public struct CsvData
     {
+        public string Centered { get; set; }
         public string Text { get; set; }
 
-        public CsvData(string text)
+        public CsvData(string centered, string text)
         {
+            Centered = centered;
             Text = text;
         }
     }

@@ -11,7 +11,7 @@ namespace SA2CutsceneTextTool
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
 
             var records = csv.GetRecords<CsvEventData>().ToList();
-            var cutsceneTextData = new Dictionary<int, List<Message>>();
+            var eventData = new Dictionary<int, List<Message>>();
 
             foreach (var record in records)
             {
@@ -19,14 +19,14 @@ namespace SA2CutsceneTextTool
                 {
                     string text = record.Centered == "+" ? $"\a{record.Text}" : record.Text;
 
-                    if (!cutsceneTextData.ContainsKey(eventID))
-                        cutsceneTextData.Add(eventID, new List<Message>());
+                    if (!eventData.ContainsKey(eventID))
+                        eventData.Add(eventID, new List<Message>());
 
-                    cutsceneTextData[eventID].Add(new Message(int.Parse(record.Character), text));
+                    eventData[eventID].Add(new Message(int.Parse(record.Character), text));
                 }
             }
 
-            return cutsceneTextData;
+            return eventData;
         }
 
         public static void Write(string outputFile, List<List<CsvEventData>> csvData)

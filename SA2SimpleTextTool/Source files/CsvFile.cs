@@ -1,5 +1,4 @@
 ﻿using CsvHelper;
-using CsvHelper.Configuration;
 using System.Globalization;
 
 namespace SA2SimpleTextTool
@@ -9,37 +8,26 @@ namespace SA2SimpleTextTool
         public static List<string> Read(string inputFile)
         {
             var reader = new StreamReader(inputFile);
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = false
-            };
-            var csv = new CsvReader(reader, config);
+            var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             var records = csv.GetRecords<CsvData>().ToList();
 
             var strings = new List<string>();
 
             foreach (var record in records)
             {
-                strings.Add(record.Text);
+                string text = record.Centered == "+" ? $"\a{record.Text}" : record.Text;
+                strings.Add(text);
             }
 
             return strings;
         }
 
-        public static void Write(string outputFile, List<string> fileContents)
+        public static void Write(string outputFile, List<CsvData> fileContents)
         {
             var writer = new StreamWriter(outputFile);
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = false
-            };
-            var csv = new CsvWriter(writer, config);
-            var csvData = new List<CsvData>();
-
-            foreach (var line in fileContents)
-                csvData.Add(new CsvData(line));
-
-            csv.WriteRecords(csvData);
+            var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            
+            csv.WriteRecords(fileContents);
             writer.Flush();
         }
     }    
