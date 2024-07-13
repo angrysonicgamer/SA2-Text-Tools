@@ -1,20 +1,22 @@
 ﻿using System.Text;
 
-namespace SA2MsgFileTextTool
+namespace SA2SubtitlesTimingTool
 {
-    internal class Program
+    public static class Program
     {
-        private static readonly string title = "SA2 Message File Text Tool";
+        private static readonly string title = "SA2 Subtitles Timing Tool";
         private static readonly string usage = "Please provide a compressed PRS file to export the data into CSV table and edit it however you want.\n" +
             "By providing a CSV table exported via this tool you can make a new PRS file with new data.\n\n" +
-            "Use it only for message files (mh00XXY.prs/csv and mhsysY.prs/csv), where XX - stage ID, Y - language (j/e/f/s/g/i).\n\n" +
-            "The tool uses CP1251 encoding for English, CP1252 for other European languages and Shift-JIS for Japanese (checks the last letter in the file name).\n";
-        private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";            
+            "Use it only for subtitle timing files (e0XXX_Y.prs/csv),\n" +
+            "where XXX - event ID, Y - language (letter 'j' for Japanese, digits 1-5 for other languages).\n" +
+            "Note that you also need event text files (evmesXY.prs) in the same folder.\n\n" +
+            "The tool uses CP1251 encoding for English, CP1252 for other European languages and Shift-JIS for Japanese (checks the last char in the file name).\n";
+        private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
         private static readonly string noFile = "File not found.\n";
-        private static readonly string wrongName = "Wrong file name.\nSupported file names: mh00XXY.prs/csv or mhsysY.prs/csv, where XX - stage ID, Y - language (j/e/f/s/g/i).\n";
+        private static readonly string wrongName = "Wrong file name.\nSupported file names: e0XXX_Y.prs/csv, where XXX - event ID, Y - language (letter 'j' for Japanese, digits 1-5 for other languages).\n";
         private static readonly string wrongExtension = "Wrong extension.\nPlease provide a compressed PRS file or a CSV table exported via this tool before.\n";
-        
+
 
         public static void Main(string[] args)
         {
@@ -22,7 +24,7 @@ namespace SA2MsgFileTextTool
             if (CheckCondition(args.Length == 0, emptyArgs + usage)) return;
             if (CheckCondition(args.Length > 1, tooManyArgs + usage)) return;
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
-            if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("mh"), wrongName)) return;
+            if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("e0"), wrongName)) return;
 
             string fileExtension = Path.GetExtension(args[0]).ToLower();
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
@@ -32,19 +34,22 @@ namespace SA2MsgFileTextTool
 
             if (fileExtension == ".prs")
             {
-                var fileContents = PrsFile.Read(args[0], encoding);
+                int eventID = int.Parse(Path.GetFileNameWithoutExtension(args[0]).Substring(1, 4));
+                string eventTextFile = GetEventTextFileName(args[0], eventID);
+                var eventData = PrsFile.Read(args[0], eventTextFile, eventID, encoding);
                 string outputFile = GetOutputFileName(args[0], ".csv");
-                CsvFile.Write(outputFile, fileContents);
+                CsvFile.Write(outputFile, eventData);
                 Console.WriteLine($"CSV file \"{Path.GetFileName(outputFile)}\" successfully created!");
             }
             else // if .csv
             {
                 var fileContents = CsvFile.Read(args[0]);
                 string outputFile = GetOutputFileName(args[0], ".prs");
-                PrsFile.Write(outputFile, fileContents, encoding);
+                PrsFile.Write(outputFile, fileContents);
                 Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created! You can use it in your mod!");
             }
         }
+
 
         private static void SetAppTitle()
         {
@@ -77,7 +82,7 @@ namespace SA2MsgFileTextTool
                 case 'j':
                     codepage = 932; // Japanese - Shift-JIS
                     break;
-                case 'e':
+                case '1':
                     codepage = 1251; // English - CP1251, meant to use for Russian as well
                     break;
                 default:
@@ -86,6 +91,30 @@ namespace SA2MsgFileTextTool
             }
 
             return Encoding.GetEncoding(codepage);
+        }
+
+        private static string GetEventTextFileName(string timingFile, int eventID)
+        {
+            char language = Path.GetFileNameWithoutExtension(timingFile).Last();
+            if (language == 'j')
+                language = '0';
+                        
+            string eventTextFile = "";
+
+            if (eventID < 100)
+            {
+                eventTextFile = $"evmesH{language}.prs";
+            }
+            else if (eventID >= 100 && eventID < 200)
+            {
+                eventTextFile = $"evmesD{language}.prs";
+            }
+            else if (eventID >= 200)
+            {
+                eventTextFile = $"evmesL{language}.prs";
+            }
+
+            return eventTextFile;
         }
     }
 }

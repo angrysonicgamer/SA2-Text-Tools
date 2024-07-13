@@ -22,7 +22,7 @@ namespace SA2SimpleTextTool
             if (CheckCondition(args.Length > 1, tooManyArgs + usage)) return;
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
 
-            string fileExtension = Path.GetExtension(args[0]);
+            string fileExtension = Path.GetExtension(args[0]).ToLower();
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);

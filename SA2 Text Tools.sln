@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2EmeraldHintsTool", "SA2E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2CutsceneTextTool", "SA2CutsceneTextTool\SA2CutsceneTextTool.csproj", "{F2CCA3C4-98EF-4219-A73A-010B9F14DD2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SA2ChaoNamesTool", "SA2ChaoNamesTool\SA2ChaoNamesTool.csproj", "{F516BC23-EACF-4D88-AF43-C5A55AC9E926}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2ChaoNamesTool", "SA2ChaoNamesTool\SA2ChaoNamesTool.csproj", "{F516BC23-EACF-4D88-AF43-C5A55AC9E926}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SA2SubtitlesTimingTool", "SA2SubtitlesTimingTool\SA2SubtitlesTimingTool.csproj", "{FFAE8404-CF0A-49A2-B504-82BAF70D3EEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{F516BC23-EACF-4D88-AF43-C5A55AC9E926}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F516BC23-EACF-4D88-AF43-C5A55AC9E926}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F516BC23-EACF-4D88-AF43-C5A55AC9E926}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFAE8404-CF0A-49A2-B504-82BAF70D3EEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFAE8404-CF0A-49A2-B504-82BAF70D3EEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFAE8404-CF0A-49A2-B504-82BAF70D3EEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFAE8404-CF0A-49A2-B504-82BAF70D3EEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

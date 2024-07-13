@@ -25,7 +25,7 @@ namespace SA2ChaoNamesTool
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
             if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("msgalkinderfoname_"), wrongName)) return;
 
-            string fileExtension = GetFileExtension(args[0]);
+            string fileExtension = GetFileExtension(args[0]).ToLower();
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".txt", wrongExtension)) return;
 
             if (Path.GetFileNameWithoutExtension(args[0]).Last() == 'j')

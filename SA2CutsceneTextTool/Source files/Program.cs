@@ -23,8 +23,8 @@ namespace SA2CutsceneTextTool
             if (CheckCondition(args.Length > 1, tooManyArgs + usage)) return;
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
             if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("evmes"), wrongName)) return;
-            
-            string fileExtension = Path.GetExtension(args[0]);
+
+            string fileExtension = Path.GetExtension(args[0]).ToLower(); ;
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);

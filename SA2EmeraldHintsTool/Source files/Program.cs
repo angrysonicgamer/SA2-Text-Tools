@@ -24,7 +24,7 @@ namespace SA2EmeraldHintsTool
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
             if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("eh00"), wrongName)) return;
 
-            string fileExtension = Path.GetExtension(args[0]);
+            string fileExtension = Path.GetExtension(args[0]).ToLower();
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
