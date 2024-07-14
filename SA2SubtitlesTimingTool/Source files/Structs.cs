@@ -37,9 +37,9 @@
     {
         public string Text { get; set; }
         public int FrameStart { get; set; }
-        public int Duration { get; set; }
+        public uint Duration { get; set; }
 
-        public CsvTimingData(string text, int frameStart, int duration)
+        public CsvTimingData(string text, int frameStart, uint duration)
         {
             Text = text;
             FrameStart = frameStart;

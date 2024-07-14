@@ -23,7 +23,7 @@ namespace SA2SubtitlesTimingTool
             for (int i = 0; i < messageList.Count; i++)
             {
                 int frameStart = timingReader.ReadInt32(Endianness.BigEndian);
-                int duration = timingReader.ReadInt32(Endianness.BigEndian);
+                uint duration = timingReader.ReadUInt32(Endianness.BigEndian);
 
                 csvData.Add(new CsvTimingData(messageList[i].Text, frameStart, duration));
             }
