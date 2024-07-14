@@ -37,7 +37,7 @@
     {
         public string Text { get; set; }
         public int FrameStart { get; set; }
-        public uint Duration { get; set; }
+        public uint Duration { get; set; } // if FrameStart = -1, this acts as an X coordinate of the timestamp
 
         public CsvTimingData(string text, int frameStart, uint duration)
         {
