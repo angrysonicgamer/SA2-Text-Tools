@@ -24,19 +24,21 @@ namespace SA2SubtitlesTimingTool
             if (CheckCondition(args.Length == 0, emptyArgs + usage)) return;
             if (CheckCondition(args.Length > 1, tooManyArgs + usage)) return;
             if (CheckCondition(!File.Exists(args[0]), noFile)) return;
-            if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("e0"), wrongName)) return;
+
+            string fileName = Path.GetFileNameWithoutExtension(args[0]).ToLower();
+            if (CheckCondition(!(fileName.StartsWith("e0") || fileName.StartsWith("me0")), wrongName)) return;
 
             string fileExtension = Path.GetExtension(args[0]).ToLower();
-            if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
+            if (CheckCondition(fileExtension != ".prs" && fileExtension != ".scr" && fileExtension != ".csv", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Encoding encoding = SetEncoding(args[0]);
 
-            if (fileExtension == ".prs")
+            if (fileExtension == ".prs" || fileExtension == ".scr")
             {
-                int eventID = int.Parse(Path.GetFileNameWithoutExtension(args[0]).Substring(1, 4));
+                int eventID = int.Parse(fileName.Substring(fileName.IndexOf('0'), 4));
                 string eventTextFile = GetEventTextFileName(args[0], eventID);
-                var eventData = PrsFile.Read(args[0], eventTextFile, eventID, encoding);
+                var eventData = GameFile.Read(args[0], eventTextFile, eventID, encoding);
                 string outputFile = GetOutputFileName(args[0], ".csv");
                 CsvFile.Write(outputFile, eventData);
                 Console.WriteLine($"CSV file \"{Path.GetFileName(outputFile)}\" successfully created!");
@@ -44,8 +46,9 @@ namespace SA2SubtitlesTimingTool
             else // if .csv
             {
                 var fileContents = CsvFile.Read(args[0]);
-                string outputFile = GetOutputFileName(args[0], ".prs");
-                PrsFile.Write(outputFile, fileContents);
+                string extension = Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("e0") ? ".prs" : ".scr";
+                string outputFile = GetOutputFileName(args[0], extension);
+                GameFile.Write(outputFile, fileContents);
                 Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created! You can use it in your mod!");
             }
         }
