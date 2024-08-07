@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2MsgFileTextTool", "SA2MsgFileTextTool\SA2MsgFileTextTool.csproj", "{7B4D3668-2D4B-4064-B447-6F247B6EF32D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2MessageTextTool", "SA2MessageTextTool\SA2MessageTextTool.csproj", "{7B4D3668-2D4B-4064-B447-6F247B6EF32D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2SimpleTextTool", "SA2SimpleTextTool\SA2SimpleTextTool.csproj", "{ED171B94-25C9-43DE-9BB6-6141506E3597}"
 EndProject
@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2CutsceneTextTool", "SA2C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2ChaoNamesTool", "SA2ChaoNamesTool\SA2ChaoNamesTool.csproj", "{F516BC23-EACF-4D88-AF43-C5A55AC9E926}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SA2SubtitlesTimingTool", "SA2SubtitlesTimingTool\SA2SubtitlesTimingTool.csproj", "{FFAE8404-CF0A-49A2-B504-82BAF70D3EEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SA2SubtitlesTimingTool", "SA2SubtitlesTimingTool\SA2SubtitlesTimingTool.csproj", "{FFAE8404-CF0A-49A2-B504-82BAF70D3EEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -18,9 +18,9 @@ namespace SA2MsgFileTextTool
     {
         private static readonly Dictionary<string, string> buttonsMap = new Dictionary<string, string>()
         {
-            { "±", "%A_button%" },
-            { "¶", "%B_button%" },
-            { "Ё", "%Y_button%" },
+            { "±", "{A}" },
+            { "¶", "{B}" },
+            { "Ё", "{Y}" },
         };
 
         private static readonly Dictionary<char, char> lettersToConvert = new Dictionary<char, char>()
@@ -75,16 +75,24 @@ namespace SA2MsgFileTextTool
             return encoding.GetString(reader.ReadBytesUntilNullTerminator());
         }
 
+        public static string ReadChaoName(this BinaryReader reader)
+        {
+            var bytes = reader.ReadBytesUntilNullTerminator();
+            return TextConversion.ToString(bytes);
+        }
+
 
         private static byte[] ReadBytesUntilNullTerminator(this BinaryReader reader)
         {
             var bytes = new List<byte>();
 
-            do
+            while (true)
             {
-                bytes.Add(reader.ReadByte());
+                byte b = reader.ReadByte();
+                if (b == 0) break;
+
+                bytes.Add(b);
             }
-            while (bytes.Last() != 0);
 
             return bytes.ToArray();
         }
