@@ -74,11 +74,13 @@ namespace SA2CutsceneTextTool
         {
             var bytes = new List<byte>();
 
-            do
+            while (true)
             {
-                bytes.Add(reader.ReadByte());
+                byte b = reader.ReadByte();
+                if (b == 0) break;
+
+                bytes.Add(b);
             }
-            while (bytes.Last() != 0);
 
             return bytes.ToArray();
         }        

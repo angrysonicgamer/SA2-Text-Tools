@@ -5,15 +5,15 @@ namespace SA2CutsceneTextTool
     public static class Program
     {
         private static readonly string title = "SA2 Cutscene Text Tool";
-        private static readonly string usage = "Please provide a compressed PRS file to export the data into CSV table and edit it however you want.\n" +
-            "By providing a CSV table exported via this tool you can make a new PRS file with new data.\n\n" +
+        private static readonly string usage = "Please provide a compressed PRS file to export the data into CSV table and JSON file and edit either of them however you want.\n" +
+            "By providing a CSV table / JSON file exported via this tool you can make a new PRS file with new data.\n\n" +
             "Use it only for cutscene files (evmesXY.prs/csv), where X - H/D/L (hero/dark/last story), Y - language (digits 0-5).\n\n" +
             "The tool uses CP1251 encoding for English, CP1252 for other European languages and Shift-JIS for Japanese (checks the last digit in the file name).\n";
         private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
         private static readonly string noFile = "File not found.\n";
-        private static readonly string wrongName = "Wrong file name.\nSupported file names: evmesXY.prs/csv, where X - H/D/L (hero/dark/last story), Y - language (digits 0-5).\n";
-        private static readonly string wrongExtension = "Wrong extension.\nPlease provide a compressed PRS file or a CSV table exported via this tool before.\n";
+        private static readonly string wrongName = "Wrong file name.\nSupported file names: evmesXY.prs/csv/json, where X - H/D/L (hero/dark/last story), Y - language (digits 0-5).\n";
+        private static readonly string wrongExtension = "Wrong extension.\nPlease provide a compressed PRS file or a CSV table / JSON file exported via this tool before.\n";
 
 
         static void Main(string[] args)
@@ -25,7 +25,7 @@ namespace SA2CutsceneTextTool
             if (CheckCondition(!Path.GetFileNameWithoutExtension(args[0]).ToLower().StartsWith("evmes"), wrongName)) return;
 
             string fileExtension = Path.GetExtension(args[0]).ToLower(); ;
-            if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv", wrongExtension)) return;
+            if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv" && fileExtension != ".json", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Encoding encoding = SetEncoding(args[0]);
@@ -33,17 +33,30 @@ namespace SA2CutsceneTextTool
             if (fileExtension == ".prs")
             {
                 var eventData = PrsFile.Read(args[0], encoding);
-                string outputFile = GetOutputFileName(args[0], ".csv");
-                CsvFile.Write(outputFile, eventData);
-                Console.WriteLine($"CSV file \"{Path.GetFileName(outputFile)}\" successfully created!");
+                var csvEventData = CsvFile.GetCsvData(eventData);
+                string outputJson = GetOutputFileName(args[0], ".json");
+                string outputCsv = GetOutputFileName(args[0], ".csv");
+                JsonFile.Write(outputJson, eventData);
+                CsvFile.Write(outputCsv, csvEventData);
+                Console.WriteLine($"JSON file \"{outputJson}\" successfully created!\nCSV file \"{outputCsv}\" successfully created!\nUse either of them to edit cutscene text.");
             }
-            else // if .csv
+            else // if .csv or .json
             {
-                var fileContents = CsvFile.Read(args[0]);
+                var fileContents = new List<Scene>();
+
+                if (fileExtension == ".csv")
+                {
+                    fileContents = CsvFile.Read(args[0]);                    
+                }
+                else // if .json
+                {
+                    fileContents = JsonFile.Read(args[0]);
+                }
+
                 string outputFile = GetOutputFileName(args[0], ".prs");
                 PrsFile.Write(outputFile, fileContents, encoding);
                 Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created! You can use it in your mod!");
-            }            
+            }
         }
 
 
@@ -65,7 +78,7 @@ namespace SA2CutsceneTextTool
 
         private static string GetOutputFileName(string inputFile, string extension)
         {
-            return inputFile.Substring(0, inputFile.Length - 4) + extension;
+            return Path.GetFileNameWithoutExtension(inputFile) + extension;
         }
 
         private static Encoding SetEncoding(string fileName)
