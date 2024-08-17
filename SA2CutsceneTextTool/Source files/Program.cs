@@ -8,7 +8,7 @@ namespace SA2CutsceneTextTool
         private static readonly string usage = "Provide a compressed PRS file to export the data into either CSV table and/or JSON file.\n" +
             "Provide a CSV table / JSON file exported via this tool to create a new PRS file with new data.\n\n" +
             "Use it only for cutscene files (evmesXY.prs/csv), where X - H/D/L (hero/dark/last story), Y - language (digits 0-5).\n\n" +
-            "The tool supports Windows-1251, Windows-1252 and Shift-JIS encodings.\n" +
+            "The tool supports Windows-1251, Windows-1252 and Shift-JIS encodings and both little endian and big endian byte orders.\n" +
             "Edit AppConfig.json to set the settings you want.\n";
         private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
