@@ -2,9 +2,34 @@
 
 namespace SA2CutsceneTextTool
 {
-    public struct Pointer
+    public enum Endianness
     {
-        public static uint BaseAddress = 0x817AFE60;
+        BigEndian,
+        LittleEndian
+    }
+
+    public enum Encodings
+    {
+        Windows1251 = 1251,
+        Windows1252 = 1252,
+        ShiftJIS = 932
+    }
+
+    public enum Export
+    {
+        JSON,
+        CSV,
+        Both
+    }
+
+    public class Pointer
+    {
+        public static uint BaseAddress { get; set; }
+
+        public static void SetBaseAddress(AppConfig config)
+        {
+            BaseAddress = config.Endianness == Endianness.BigEndian ? 0x817AFE60 : 0xCBD0000;
+        }
     }
     
     public class CutsceneHeader

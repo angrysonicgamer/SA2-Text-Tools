@@ -2,12 +2,6 @@
 
 namespace SA2CutsceneTextTool
 {
-    public enum Endianness
-    {
-        BigEndian,
-        LittleEndian,
-    }
-
     public enum TextConversionMode
     {
         Default,

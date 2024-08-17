@@ -5,10 +5,11 @@ namespace SA2CutsceneTextTool
     public static class Program
     {
         private static readonly string title = "SA2 Cutscene Text Tool";
-        private static readonly string usage = "Please provide a compressed PRS file to export the data into CSV table and JSON file and edit either of them however you want.\n" +
-            "By providing a CSV table / JSON file exported via this tool you can make a new PRS file with new data.\n\n" +
+        private static readonly string usage = "Provide a compressed PRS file to export the data into either CSV table and/or JSON file.\n" +
+            "Provide a CSV table / JSON file exported via this tool to create a new PRS file with new data.\n\n" +
             "Use it only for cutscene files (evmesXY.prs/csv), where X - H/D/L (hero/dark/last story), Y - language (digits 0-5).\n\n" +
-            "The tool uses CP1251 encoding for English, CP1252 for other European languages and Shift-JIS for Japanese (checks the last digit in the file name).\n";
+            "The tool supports Windows-1251, Windows-1252 and Shift-JIS encodings.\n" +
+            "Edit AppConfig.json to set the settings you want.\n";
         private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
         private static readonly string noFile = "File not found.\n";
@@ -28,17 +29,28 @@ namespace SA2CutsceneTextTool
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".csv" && fileExtension != ".json", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            Encoding encoding = SetEncoding(args[0]);
+            AppConfig config = new();
+            config.Read();
+            Pointer.SetBaseAddress(config);
 
             if (fileExtension == ".prs")
             {
-                var eventData = PrsFile.Read(args[0], encoding);
-                var csvEventData = CsvFile.GetCsvData(eventData);
+                var eventData = PrsFile.Read(args[0], config);
+                
                 string outputJson = GetOutputFileName(args[0], ".json");
                 string outputCsv = GetOutputFileName(args[0], ".csv");
-                JsonFile.Write(outputJson, eventData);
-                CsvFile.Write(outputCsv, csvEventData);
-                Console.WriteLine($"JSON file \"{outputJson}\" successfully created!\nCSV file \"{outputCsv}\" successfully created!\nUse either of them to edit cutscene text.");
+
+                if (config.Export == Export.JSON || config.Export == Export.Both)
+                {
+                    JsonFile.Write(outputJson, eventData);
+                }
+                if (config.Export == Export.CSV || config.Export == Export.Both)
+                {
+                    var csvEventData = CsvFile.GetCsvData(eventData);
+                    CsvFile.Write(outputCsv, csvEventData);
+                }
+                
+                Console.WriteLine($"Cutscene text exported!");
             }
             else // if .csv or .json
             {
@@ -54,7 +66,7 @@ namespace SA2CutsceneTextTool
                 }
 
                 string outputFile = GetOutputFileName(args[0], ".prs");
-                PrsFile.Write(outputFile, fileContents, encoding);
+                PrsFile.Write(outputFile, fileContents, config);
                 Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created! You can use it in your mod!");
             }
         }
@@ -79,27 +91,6 @@ namespace SA2CutsceneTextTool
         private static string GetOutputFileName(string inputFile, string extension)
         {
             return Path.GetFileNameWithoutExtension(inputFile) + extension;
-        }
-
-        private static Encoding SetEncoding(string fileName)
-        {
-            char language = Path.GetFileNameWithoutExtension(fileName).Last();
-            int codepage;
-
-            switch (language)
-            {
-                case '0':
-                    codepage = 932; // Japanese - Shift-JIS
-                    break;
-                case '1':
-                    codepage = 1251; // English - CP1251, meant to use for Russian as well
-                    break;
-                default:
-                    codepage = 1252; // other European languages - CP1252
-                    break;
-            }
-
-            return Encoding.GetEncoding(codepage);
         }
     }
 }

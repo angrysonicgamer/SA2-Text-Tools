@@ -5,18 +5,15 @@ namespace SA2CutsceneTextTool
 {
     public static class PrsFile
     {
-        private static readonly Encoding cyrillic = Encoding.GetEncoding(1251);
-        
-        
-        public static List<Scene> Read(string inputFile, Encoding encoding)
+        public static List<Scene> Read(string inputFile, AppConfig config)
         {
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
-            return ReadEventData(decompressedFile, encoding);
+            return ReadEventData(decompressedFile, config);
         }
 
-        public static void Write(string outputFile, List<Scene> eventData, Encoding encoding)
+        public static void Write(string outputFile, List<Scene> eventData, AppConfig config)
         {
-            var strings = GetCStrings(eventData, encoding);
+            var strings = GetCStrings(eventData, config);
             var header = CalculateHeader(eventData);
             var messageData = CalculateMessageData(eventData);
             var contents = MergeContents(header, messageData, strings);
@@ -26,18 +23,18 @@ namespace SA2CutsceneTextTool
 
         // PRS file reading
 
-        private static List<CutsceneHeader> ReadHeader(byte[] decompressedFile)
+        private static List<CutsceneHeader> ReadHeader(byte[] decompressedFile, Endianness endianness)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var header = new List<CutsceneHeader>();
 
             while (true)
             {
-                int eventID = reader.ReadInt32(Endianness.BigEndian);
+                int eventID = reader.ReadInt32(endianness);
                 if (eventID == -1) break;
 
-                uint messagePointer = reader.ReadUInt32(Endianness.BigEndian);
-                int totalLines = reader.ReadInt32(Endianness.BigEndian);                
+                uint messagePointer = reader.ReadUInt32(endianness);
+                int totalLines = reader.ReadInt32(endianness);                
 
                 header.Add(new CutsceneHeader(eventID, messagePointer, totalLines));
             }
@@ -46,10 +43,10 @@ namespace SA2CutsceneTextTool
             return header;
         }
 
-        private static List<Scene> ReadEventData(byte[] decompressedFile, Encoding encoding)
+        private static List<Scene> ReadEventData(byte[] decompressedFile, AppConfig config)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
-            var header = ReadHeader(decompressedFile);
+            var header = ReadHeader(decompressedFile, config.Endianness);
             var eventData = new List<Scene>();
 
             foreach (var scene in header)
@@ -59,20 +56,20 @@ namespace SA2CutsceneTextTool
 
                 if (scene.TotalLines == 0)
                 {
-                    int character = reader.ReadInt32(Endianness.BigEndian);
+                    int character = reader.ReadInt32(config.Endianness);
                     messages.Add(new Message(character, false, ""));
                 }
 
                 for (int i = 0; i < scene.TotalLines; i++)
                 {
-                    int character = reader.ReadInt32(Endianness.BigEndian);
-                    uint textOffset = reader.ReadUInt32(Endianness.BigEndian) - Pointer.BaseAddress;
+                    int character = reader.ReadInt32(config.Endianness);
+                    uint textOffset = reader.ReadUInt32(config.Endianness) - Pointer.BaseAddress;
 
                     long currentPosition = reader.BaseStream.Position;
                     reader.BaseStream.Position = textOffset;
-                    string text = reader.ReadCString(encoding);
+                    string text = reader.ReadCString(config.Encoding);
 
-                    if (encoding == cyrillic)
+                    if (config.ModifiedCodepage == true)
                         text = text.ConvertToModifiedCodepage();
 
                     bool centered = text.StartsWith('\a');
@@ -93,7 +90,7 @@ namespace SA2CutsceneTextTool
 
         // Writing PRS file
 
-        private static List<byte[]> GetCStrings(List<Scene> eventData, Encoding encoding)
+        private static List<byte[]> GetCStrings(List<Scene> eventData, AppConfig config)
         {
             var cStrings = new List<byte[]>();
 
@@ -101,10 +98,10 @@ namespace SA2CutsceneTextTool
             {
                 foreach (var message in scene.Messages)
                 {
-                    string text = encoding == cyrillic ? message.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : message.Text;
+                    string text = config.ModifiedCodepage == true ? message.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : message.Text;
                     text = message.Centered ? $"\a{text}" : text;
                     var textBytes = new List<byte>();
-                    textBytes.AddRange(encoding.GetBytes(text));
+                    textBytes.AddRange(config.Encoding.GetBytes(text));
                     textBytes.Add(0);
                     cStrings.Add(textBytes.ToArray());
                 }
