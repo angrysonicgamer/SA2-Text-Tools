@@ -120,11 +120,11 @@ namespace SA2CutsceneTextTool
             {
                 int messagesCount = scene.Messages.Count;
 
-                if (messagesCount == 0)
-                    messagesCount = 1;
+                if (messagesCount == 1 && scene.Messages[0].Text == "")
+                    messagesCount = 0;
 
                 header.Add(new CutsceneHeader(scene.EventID, pointer, messagesCount));
-                pointer += (uint)messagesCount * MessagePrs.Size;
+                pointer += (uint)scene.Messages.Count * MessagePrs.Size;
             }
 
             return header;

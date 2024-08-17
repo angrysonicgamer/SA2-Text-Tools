@@ -17,8 +17,8 @@ namespace SA2CutsceneTextTool
             var jsonConfig = json["Config"];
 
             Endianness = Enum.Parse<Endianness>(jsonConfig["Endianness"].GetValue<string>());
-            Export = Enum.Parse<Export>(json["Config"]["Export"].GetValue<string>());
-            Encodings encoding = Enum.Parse<Encodings>(json["Config"]["Encoding"].GetValue<string>());
+            Export = Enum.Parse<Export>(jsonConfig["Export"].GetValue<string>());
+            Encodings encoding = Enum.Parse<Encodings>(jsonConfig["Encoding"].GetValue<string>());
             Encoding = Encoding.GetEncoding((int)encoding);
             ModifiedCodepage = json["Config"]["ModifiedCodepage"] == null ? null : json["Config"]["ModifiedCodepage"].GetValue<bool?>();
         }
