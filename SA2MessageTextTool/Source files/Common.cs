@@ -1,7 +1,20 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SA2MsgFileTextTool
+namespace SA2MessageTextTool
 {
+    public enum Endianness
+    {
+        BigEndian,
+        LittleEndian
+    }
+
+    public enum Encodings
+    {
+        Windows1251 = 1251,
+        Windows1252 = 1252,
+        ShiftJIS = 932
+    }
+
     public class Message
     {
         public int? Voice { get; set; }

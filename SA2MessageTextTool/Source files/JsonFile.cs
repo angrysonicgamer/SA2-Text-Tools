@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace SA2MsgFileTextTool
+namespace SA2MessageTextTool
 {
     public static class JsonFile
     {

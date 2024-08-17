@@ -1,14 +1,15 @@
 ﻿using System.Text;
 
-namespace SA2MsgFileTextTool
+namespace SA2MessageTextTool
 {
     public static class Program
     {
         private static readonly string title = "SA2 Message File Text Tool";
-        private static readonly string usage = "Please provide a compressed PRS file to export the data into JSON file and edit it however you want.\n" +
-            "By providing a JSON file exported via this tool you can make a new PRS file with new data.\n\n" +
+        private static readonly string usage = "Provide a compressed PRS file to export the data into JSON file and edit it however you want.\n" +
+            "Provide a JSON file exported via this tool to create a new PRS file with new data.\n\n" +
             "You can use for any SA2 message file, except for the event ones.\n\n" +
-            "The tool uses CP1251 encoding for English, CP1252 for other European languages and Shift-JIS for Japanese (checks the last letter in the file name).\n";
+            "The tool supports Windows-1251, Windows-1252 and Shift-JIS encodings and both little endian and big endian byte orders.\n" +
+            "Edit AppConfig.json to set the settings you want.\n";
         private static readonly string emptyArgs = "You haven't provided a file to read.\n\n";            
         private static readonly string tooManyArgs = "Too many arguments.\nPlease provide a file name as the only argument.\n\n";
         private static readonly string noFile = "File not found.\n";
@@ -26,11 +27,12 @@ namespace SA2MsgFileTextTool
             if (CheckCondition(fileExtension != ".prs" && fileExtension != ".json", wrongExtension)) return;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            Encoding encoding = SetEncoding(args[0]);
+            AppConfig config = new();
+            config.Read();
 
             if (fileExtension == ".prs")
             {
-                var fileContents = PrsFile.Read(args[0], encoding);
+                var fileContents = PrsFile.Read(args[0], config);
                 string outputFile = GetOutputFileName(args[0], ".json");
                 JsonFile.Write(outputFile, fileContents);
                 Console.WriteLine($"JSON file \"{Path.GetFileName(outputFile)}\" successfully created!");
@@ -39,7 +41,7 @@ namespace SA2MsgFileTextTool
             {
                 var fileContents = JsonFile.Read(args[0]);
                 string outputFile = GetOutputFileName(args[0], ".prs");
-                PrsFile.Write(outputFile, fileContents, encoding);
+                PrsFile.Write(outputFile, fileContents, config);
                 Console.WriteLine($"PRS file \"{Path.GetFileName(outputFile)}\" successfully created! You can use it in your mod!");
             }
         }
@@ -63,27 +65,6 @@ namespace SA2MsgFileTextTool
         private static string GetOutputFileName(string inputFile, string extension)
         {
             return Path.GetFileNameWithoutExtension(inputFile) + extension;
-        }
-
-        private static Encoding SetEncoding(string fileName)
-        {
-            char language = Path.GetFileNameWithoutExtension(fileName).Last();
-            int codepage;
-
-            switch (language)
-            {
-                case 'j':
-                    codepage = 932; // Japanese - Shift-JIS
-                    break;
-                case 'e':
-                    codepage = 1251; // English - CP1251, meant to use for Russian as well
-                    break;
-                default:
-                    codepage = 1252; // other European languages - CP1252
-                    break;
-            }
-
-            return Encoding.GetEncoding(codepage);
         }
     }
 }

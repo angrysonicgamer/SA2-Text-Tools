@@ -1,13 +1,7 @@
 ﻿using System.Text;
 
-namespace SA2MsgFileTextTool
+namespace SA2MessageTextTool
 {
-    public enum Endianness
-    {
-        BigEndian,
-        LittleEndian,
-    }
-
     public enum TextConversionMode
     {
         Default,

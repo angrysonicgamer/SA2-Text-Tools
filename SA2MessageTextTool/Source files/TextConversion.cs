@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace SA2MsgFileTextTool
+namespace SA2MessageTextTool
 {
     public static class TextConversion
     {

@@ -1,47 +1,45 @@
 ﻿using csharp_prs;
 using System.Text;
 
-namespace SA2MsgFileTextTool
+namespace SA2MessageTextTool
 {
     public static class PrsFile
     {
-        private static readonly Encoding cyrillic = Encoding.GetEncoding(1251);
-
-        public static List<List<Message>> Read(string inputFile, Encoding encoding)
+        public static List<List<Message>> Read(string inputFile, AppConfig config)
         {
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
             string fileName = Path.GetFileNameWithoutExtension(inputFile);
 
-            var pointers = ReadOffsets(decompressedFile);
+            var pointers = ReadOffsets(decompressedFile, config);
             var messages = new List<List<Message>>();
 
-            if (fileName.StartsWith("eh"))
-                messages = ReadEmeraldHints(decompressedFile, pointers, encoding);
-            else if (fileName.StartsWith("mh"))
-                messages = ReadMessages(decompressedFile, pointers, encoding);
-            else if (fileName.StartsWith("MsgAlKinderFoName"))
+            if (fileName.ToLower().StartsWith("eh"))
+                messages = ReadEmeraldHints(decompressedFile, pointers, config);
+            else if (fileName.ToLower().StartsWith("mh"))
+                messages = ReadMessages(decompressedFile, pointers, config);
+            else if (fileName.ToLower().StartsWith("MsgAlKinderFoName"))
                 messages = ReadChaoNames(decompressedFile, pointers);
             else
-                messages = ReadSimpleText(decompressedFile, pointers, encoding);
+                messages = ReadSimpleText(decompressedFile, pointers, config);
 
             return messages;
         } 
 
-        public static void Write(string outputFile, List<List<Message>> jsonContents, Encoding encoding)
+        public static void Write(string outputFile, List<List<Message>> jsonContents, AppConfig config)
         {
             string fileName = Path.GetFileNameWithoutExtension(outputFile);
             var strings = new List<string>();
 
-            if (fileName.StartsWith("eh"))
+            if (fileName.ToLower().StartsWith("eh"))
                 strings = GetEmeraldHintStrings(jsonContents);
-            else if (fileName.StartsWith("mh"))
+            else if (fileName.ToLower().StartsWith("mh"))
                 strings = GetCombinedMessageStrings(jsonContents);            
             else
                 strings = GetSimpleStrings(jsonContents);
 
             bool isChaoNames = fileName.StartsWith("MsgAlKinderFoName");
 
-            var cText = GetCStringsAndPointers(strings, encoding, isChaoNames);
+            var cText = GetCStringsAndPointers(strings, config, isChaoNames);
             var contents = GetFileContents(cText);
             File.WriteAllBytes(outputFile, Prs.Compress(contents, 0x1FFF));
         }
@@ -49,14 +47,14 @@ namespace SA2MsgFileTextTool
 
         // Reading PRS file
 
-        private static List<int> ReadOffsets(byte[] decompressedFile)
+        private static List<int> ReadOffsets(byte[] decompressedFile, AppConfig config)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var offsets = new List<int>();
 
             while (true)
             {
-                int offset = reader.ReadInt32(Endianness.BigEndian);
+                int offset = reader.ReadInt32(config.Endianness);
                 if (offset == -1 || offset > reader.BaseStream.Length) break;
 
                 offsets.Add(offset);
@@ -66,17 +64,17 @@ namespace SA2MsgFileTextTool
             return offsets;
         }
 
-        private static List<List<Message>> ReadMessages(byte[] decompressedFile, List<int> pointers, Encoding encoding)
+        private static List<List<Message>> ReadMessages(byte[] decompressedFile, List<int> offsets, AppConfig config)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var messagesList = new List<List<Message>>();
 
-            foreach (var pointer in pointers)
+            foreach (var offset in offsets)
             {
-                reader.BaseStream.Position = pointer;
-                string contents = reader.ReadCString(encoding).ReplaceKeyboardButtons();
+                reader.BaseStream.Position = offset;
+                string contents = reader.ReadCString(config.Encoding).ReplaceKeyboardButtons();
 
-                if (encoding == cyrillic)
+                if (config.ModifiedCodepage == true)
                     contents = contents.ConvertToModifiedCodepage();
 
                 string[] lines = contents.Split(new char[] { '\x0C' }, StringSplitOptions.RemoveEmptyEntries);
@@ -106,7 +104,7 @@ namespace SA2MsgFileTextTool
             return messagesList;
         }
 
-        private static List<List<Message>> ReadEmeraldHints(byte[] decompressedFile, List<int> pointers, Encoding encoding)
+        private static List<List<Message>> ReadEmeraldHints(byte[] decompressedFile, List<int> pointers, AppConfig config)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var hintsPerPiece = new List<Message>();
@@ -115,9 +113,9 @@ namespace SA2MsgFileTextTool
             foreach (var pointer in pointers)
             {
                 reader.BaseStream.Position = pointer;
-                string contents = reader.ReadCString(encoding).ReplaceKeyboardButtons();
+                string contents = reader.ReadCString(config.Encoding).ReplaceKeyboardButtons();
 
-                if (encoding == cyrillic)
+                if (config.ModifiedCodepage == true)
                     contents = contents.ConvertToModifiedCodepage();
 
                 string controls = contents.Substring(0, contents.IndexOf(' '));
@@ -140,7 +138,7 @@ namespace SA2MsgFileTextTool
             return messagesList;
         }
 
-        private static List<List<Message>> ReadSimpleText(byte[] decompressedFile, List<int> pointers, Encoding encoding)
+        private static List<List<Message>> ReadSimpleText(byte[] decompressedFile, List<int> pointers, AppConfig config)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var messagesList = new List<List<Message>>();
@@ -149,9 +147,9 @@ namespace SA2MsgFileTextTool
             foreach (var pointer in pointers)
             {
                 reader.BaseStream.Position = pointer;
-                string text = reader.ReadCString(encoding).ReplaceKeyboardButtons();
+                string text = reader.ReadCString(config.Encoding).ReplaceKeyboardButtons();
 
-                if (encoding == cyrillic)
+                if (config.ModifiedCodepage == true)
                     text = text.ConvertToModifiedCodepage();
 
                 bool? centered = text.StartsWith('\a') == true ? true : null;
@@ -277,7 +275,7 @@ namespace SA2MsgFileTextTool
         }
 
 
-        private static List<CStyleText> GetCStringsAndPointers(List<string> strings, Encoding encoding, bool isChaoNames = false)
+        private static List<CStyleText> GetCStringsAndPointers(List<string> strings, AppConfig config, bool isChaoNames = false)
         {
             var cText = new List<CStyleText>();
             int separatorLength = 4;
@@ -288,10 +286,10 @@ namespace SA2MsgFileTextTool
                 var cString = new List<byte>();
                 string text = line;
 
-                if (encoding == cyrillic)
+                if (config.ModifiedCodepage == true)
                     text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
 
-                byte[] textBytes = isChaoNames ? TextConversion.ToBytes(text) : encoding.GetBytes(text);
+                byte[] textBytes = isChaoNames ? TextConversion.ToBytes(text) : config.Encoding.GetBytes(text);
 
                 cString.AddRange(textBytes);
                 cString.Add(0);
