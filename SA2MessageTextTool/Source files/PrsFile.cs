@@ -214,7 +214,7 @@ namespace SA2MessageTextTool
                     builder.Append(line.Text);
                 }
 
-                string text = builder.ToString().ReplaceKeyboardButtons(TextConversionMode.Reversed);
+                string text = builder.ToString();
                 combinedStrings.Add(text);
             }
 
@@ -243,7 +243,7 @@ namespace SA2MessageTextTool
 
                     builder.Append(hint.Text);
 
-                    string text = builder.ToString().ReplaceKeyboardButtons(TextConversionMode.Reversed);
+                    string text = builder.ToString();
                     emeraldHints.Add(text);
                 }
             }
@@ -266,7 +266,7 @@ namespace SA2MessageTextTool
 
                     builder.Append(line.Text);
 
-                    string text = builder.ToString().ReplaceKeyboardButtons(TextConversionMode.Reversed);
+                    string text = builder.ToString();
                     strings.Add(text);
                 }
             }
@@ -288,6 +288,8 @@ namespace SA2MessageTextTool
 
                 if (config.ModifiedCodepage == true)
                     text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
+
+                text = text.ReplaceKeyboardButtons(TextConversionMode.Reversed);
 
                 byte[] textBytes = isChaoNames ? TextConversion.ToBytes(text) : config.Encoding.GetBytes(text);
 
