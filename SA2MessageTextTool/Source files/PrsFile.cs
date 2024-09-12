@@ -17,7 +17,7 @@ namespace SA2MessageTextTool
                 messages = ReadEmeraldHints(decompressedFile, pointers, config);
             else if (fileName.ToLower().StartsWith("mh"))
                 messages = ReadMessages(decompressedFile, pointers, config);
-            else if (fileName.ToLower().StartsWith("MsgAlKinderFoName"))
+            else if (fileName.ToLower().StartsWith("msgalkinderfoname"))
                 messages = ReadChaoNames(decompressedFile, pointers);
             else
                 messages = ReadSimpleText(decompressedFile, pointers, config);
