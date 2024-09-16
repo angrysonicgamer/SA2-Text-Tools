@@ -40,7 +40,7 @@ namespace SA2MessageTextTool
             bool isChaoNames = fileName.StartsWith("MsgAlKinderFoName");
 
             var cText = GetCStringsAndPointers(strings, config, isChaoNames);
-            var contents = GetFileContents(cText);
+            var contents = GetFileContents(cText, config);
             File.WriteAllBytes(outputFile, Prs.Compress(contents, 0x1FFF));
         }
 
@@ -302,13 +302,13 @@ namespace SA2MessageTextTool
             return cText;
         }
 
-        private static byte[] GetFileContents(List<CStyleText> cText)
+        private static byte[] GetFileContents(List<CStyleText> cText, AppConfig config)
         {
             var contents = new List<byte>();
 
             foreach (var entry in cText)
             {
-                byte[] offsetBytes = BitConverter.GetBytes(entry.Offset).Reverse().ToArray();
+                byte[] offsetBytes = config.Endianness == Endianness.BigEndian ? BitConverter.GetBytes(entry.Offset).Reverse().ToArray() : BitConverter.GetBytes(entry.Offset);
                 contents.AddRange(offsetBytes);
             }
 
