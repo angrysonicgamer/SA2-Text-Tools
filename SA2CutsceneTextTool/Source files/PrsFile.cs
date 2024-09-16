@@ -16,7 +16,7 @@ namespace SA2CutsceneTextTool
             var strings = GetCStrings(eventData, config);
             var header = CalculateHeader(eventData);
             var messageData = CalculateMessageData(eventData);
-            var contents = MergeContents(header, messageData, strings);
+            var contents = MergeContents(header, messageData, strings, config);
             File.WriteAllBytes(outputFile, Prs.Compress(contents, 0x1FFF));
         }
 
@@ -157,15 +157,26 @@ namespace SA2CutsceneTextTool
             return messageData;
         }
 
-        private static byte[] MergeContents(List<CutsceneHeader> header, List<MessagePrs> messageData, List<byte[]> strings)
+        private static byte[] MergeContents(List<CutsceneHeader> header, List<MessagePrs> messageData, List<byte[]> strings, AppConfig config)
         {
             var contents = new List<byte>();
 
             foreach (var scene in header)
             {
-                contents.AddRange(BitConverter.GetBytes(scene.EventID).Reverse());
-                contents.AddRange(BitConverter.GetBytes(scene.MessagePointer).Reverse());
-                contents.AddRange(BitConverter.GetBytes(scene.TotalLines).Reverse());
+                byte[] eventID = BitConverter.GetBytes(scene.EventID);
+                byte[] messagePtr = BitConverter.GetBytes(scene.MessagePointer);
+                byte[] totalLines = BitConverter.GetBytes(scene.TotalLines);
+
+                if (config.Endianness == Endianness.BigEndian)
+                {
+                    eventID = eventID.Reverse().ToArray();
+                    messagePtr = messagePtr.Reverse().ToArray();
+                    totalLines = totalLines.Reverse().ToArray();
+                }
+
+                contents.AddRange(eventID);
+                contents.AddRange(messagePtr);
+                contents.AddRange(totalLines);
             }
 
             contents.AddRange([0xFF, 0xFF, 0xFF, 0xFF]);
@@ -173,8 +184,17 @@ namespace SA2CutsceneTextTool
 
             foreach (var message in messageData)
             {
-                contents.AddRange(BitConverter.GetBytes(message.Character).Reverse());
-                contents.AddRange(BitConverter.GetBytes(message.TextPointer).Reverse());
+                byte[] character = BitConverter.GetBytes(message.Character);
+                byte[] textPtr = BitConverter.GetBytes(message.TextPointer);
+
+                if (config.Endianness == Endianness.BigEndian)
+                {
+                    character = character.Reverse().ToArray();
+                    textPtr = textPtr.Reverse().ToArray();
+                }
+
+                contents.AddRange(character);
+                contents.AddRange(textPtr);
             }
 
             foreach (var line in strings)
