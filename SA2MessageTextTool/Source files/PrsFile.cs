@@ -18,7 +18,7 @@ namespace SA2MessageTextTool
             else if (fileName.ToLower().StartsWith("mh"))
                 messages = ReadMessages(decompressedFile, pointers, config);
             else if (fileName.ToLower().StartsWith("msgalkinderfoname"))
-                messages = ReadChaoNames(decompressedFile, pointers);
+                messages = ReadChaoNames(decompressedFile, pointers, config);
             else
                 messages = ReadSimpleText(decompressedFile, pointers, config);
 
@@ -163,11 +163,13 @@ namespace SA2MessageTextTool
             return messagesList;
         }
 
-        private static List<List<Message>> ReadChaoNames(byte[] decompressedFile, List<int> pointers)
+        private static List<List<Message>> ReadChaoNames(byte[] decompressedFile, List<int> pointers, AppConfig config)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var messagesList = new List<List<Message>>();
             var linesList = new List<Message>();
+
+            ChaoTextConverter.SetCharacterTable(config);
 
             foreach (var pointer in pointers)
             {
@@ -291,7 +293,17 @@ namespace SA2MessageTextTool
 
                 text = text.ReplaceKeyboardButtons(TextConversionMode.Reversed);
 
-                byte[] textBytes = isChaoNames ? TextConversion.ToBytes(text) : config.Encoding.GetBytes(text);
+                byte[] textBytes;
+                
+                if (isChaoNames)
+                {
+                    ChaoTextConverter.SetCharacterTable(config);
+                    textBytes = ChaoTextConverter.ToBytes(text);
+                }
+                else
+                {
+                    textBytes = config.Encoding.GetBytes(text);
+                }
 
                 cString.AddRange(textBytes);
                 cString.Add(0);

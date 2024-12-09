@@ -72,7 +72,7 @@ namespace SA2MessageTextTool
         public static string ReadChaoName(this BinaryReader reader)
         {
             var bytes = reader.ReadBytesUntilNullTerminator();
-            return TextConversion.ToString(bytes);
+            return ChaoTextConverter.ToString(bytes);
         }
 
 
