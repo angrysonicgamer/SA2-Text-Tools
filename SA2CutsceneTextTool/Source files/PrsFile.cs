@@ -15,7 +15,7 @@ namespace SA2CutsceneTextTool
         {
             var strings = GetCStrings(eventData, config);
             var header = CalculateHeader(eventData);
-            var messageData = CalculateMessageData(eventData);
+            var messageData = CalculateMessageData(eventData, config);
             var contents = MergeContents(header, messageData, strings, config);
             File.WriteAllBytes(outputFile, Prs.Compress(contents, 0x1FFF));
         }
@@ -130,7 +130,7 @@ namespace SA2CutsceneTextTool
             return header;
         }
 
-        private static List<MessagePrs> CalculateMessageData(List<Scene> eventData)
+        private static List<MessagePrs> CalculateMessageData(List<Scene> eventData, AppConfig config)
         {
             int totalMessagesCount = 0;
 
@@ -148,7 +148,7 @@ namespace SA2CutsceneTextTool
                 foreach (var message in scene.Messages)
                 {
                     messageData.Add(new MessagePrs(message.Character, textPointer));
-                    textPointer += (uint)message.Text.Length + 1;
+                    textPointer += (uint)config.Encoding.GetByteCount(message.Text) + 1;
                     if (message.Centered)
                         textPointer++;
                 }
