@@ -23,4 +23,10 @@
     <NativeLibs Remove="CsvFile.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="AppConfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,20 @@
+{
+    "Info": {
+        "Endianness": [
+            { "Value": "LittleEndian",			"Description": "Used in Dreamcast version" },
+            { "Value": "BigEndian",				"Description": "Used in all other versions (Gamecube, PC, Xbox360, PS3)" }
+        ],
+        "Encoding": [
+            { "Value": "Windows1251",			"Description": "Standard single-byte Cyrillic encoding" },
+            { "Value": "Windows1252",			"Description": "Standard single-byte Latin encoding" },
+            { "Value": "ShiftJIS",				"Description": "Japanese encoding" },
+            { "Parameter": "ModifiedCodepage",	"Description": "Nullable boolean, only for 1251 (changed placement of letters Ё/ё because SOC are genius)" }
+        ]
+    },
+	
+	
+    "Config": {
+        "Endianness": "BigEndian",
+        "Encoding": "Windows1252"
+    }
+}
