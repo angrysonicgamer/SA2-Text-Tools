@@ -38,7 +38,7 @@ namespace SA2MessageTextTool
                     json.Add("\t\t[");
                     foreach (var line in linesList)
                     {
-                        string text = $"\"Text\": \"{line.Text.Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
+                        string text = $"\"Text\": \"{line.Text.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
                         string voice = line.Voice.HasValue ? $", \"Voice\": {line.Voice}" : "";
                         string duration = line.Duration.HasValue ? $", \"Duration\": {line.Duration}" : "";
                         string centered = line.Centered.HasValue ? $", \"Centered\": \"{line.Centered}\"" : "";
