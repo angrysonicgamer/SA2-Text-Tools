@@ -41,7 +41,10 @@ namespace SA2MessageTextTool
 
             var cText = GetCStringsAndPointers(strings, config, isChaoNames);
             var contents = GetFileContents(cText, config);
-            File.WriteAllBytes(outputFile, Prs.Compress(contents, 0x1FFF));
+
+            string destinationFolder = "New files";
+            Directory.CreateDirectory(destinationFolder);
+            File.WriteAllBytes($"{destinationFolder}\\{outputFile}", Prs.Compress(contents, 0x1FFF));
         }
 
 
