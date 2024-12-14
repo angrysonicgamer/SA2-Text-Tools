@@ -34,7 +34,7 @@ namespace SA2MessageTextTool
             {
                 var fileContents = PrsFile.Read(args[0], config);
                 string outputFile = GetOutputFileName(args[0], ".json");
-                JsonFile.Write(outputFile, fileContents);
+                JsonFile.Write(outputFile, fileContents, config);
                 Console.WriteLine($"JSON file \"{Path.GetFileName(outputFile)}\" successfully created!");
             }
             else // if .json

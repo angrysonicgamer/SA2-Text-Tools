@@ -8,17 +8,25 @@ namespace SA2MessageTextTool
         public Endianness Endianness { get; set; }
         public Encoding Encoding { get; set; }
         public bool? ModifiedCodepage { get; set; }
+        public JsonStyle JsonStyle { get; set; }
 
 
         public void Read()
         {
             var json = JsonNode.Parse(File.ReadAllText("AppConfig.json"));
-            var jsonConfig = json["Config"];
+            var config = json["Config"];
 
-            Endianness = Enum.Parse<Endianness>(jsonConfig["Endianness"].GetValue<string>());
-            Encodings encoding = Enum.Parse<Encodings>(jsonConfig["Encoding"].GetValue<string>());
+            Endianness = ParseEnum<Endianness>(config["Endianness"]);
+            Encodings encoding = ParseEnum<Encodings>(config["Encoding"]);
             Encoding = Encoding.GetEncoding((int)encoding);
-            ModifiedCodepage = json["Config"]["ModifiedCodepage"] == null ? null : json["Config"]["ModifiedCodepage"].GetValue<bool?>();
+            ModifiedCodepage = config["ModifiedCodepage"] != null ? config["ModifiedCodepage"].GetValue<bool?>() : null;
+            JsonStyle = ParseEnum<JsonStyle>(config["JsonStyle"]);
+        }
+
+
+        private static TEnum ParseEnum<TEnum>(JsonNode node) where TEnum : struct
+        {
+            return Enum.Parse<TEnum>(node.GetValue<string>());
         }
     }
 }

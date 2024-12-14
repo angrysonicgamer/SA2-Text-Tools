@@ -15,6 +15,12 @@ namespace SA2MessageTextTool
         ShiftJIS = 932
     }
 
+    public enum JsonStyle
+    {
+        Indented,
+        SingleLinePerEntry
+    }    
+
     public class Message
     {
         public int? Voice { get; set; }
