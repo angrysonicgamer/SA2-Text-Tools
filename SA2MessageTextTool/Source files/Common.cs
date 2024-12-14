@@ -19,7 +19,15 @@ namespace SA2MessageTextTool
     {
         Indented,
         SingleLinePerEntry
-    }    
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum Centered : short
+    {
+        NotCentered,        // ignored as null
+        Block = 7,          // \a
+        EachLine = 9        // \t
+    }
 
     public class Message
     {
@@ -28,13 +36,13 @@ namespace SA2MessageTextTool
 
         [JsonPropertyName("2P Piece")]
         public bool? Is2PPiece { get; set; }
-        public bool? Centered { get; set; }
+        public Centered? Centered { get; set; }
         public string Text { get; set; }
 
         [JsonConstructor]
         public Message() { }
 
-        public Message(int? voice, int? duration, bool? is2p, bool? centered, string text)
+        public Message(int? voice, int? duration, bool? is2p, Centered? centered, string text)
         {
             Voice = voice;
             Duration = duration;

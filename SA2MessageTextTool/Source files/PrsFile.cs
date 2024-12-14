@@ -91,9 +91,14 @@ namespace SA2MessageTextTool
                     int? duration = framecount == null ? null : int.Parse(framecount);
 
                     string text = line.Substring(line.IndexOf(' ') + 1);
+                    Centered? centered = null;
 
-                    bool centered = text.StartsWith('\a');
-                    text = centered ? text.Substring(1) : text;
+                    if (text.StartsWith('\a'))
+                        centered = Centered.Block;
+                    else if (text.StartsWith('\t'))
+                        centered = Centered.EachLine;
+
+                    text = centered.HasValue ? text.Substring(1) : text;
 
                     linesList.Add(new Message(voiceID, duration, null, centered, text));
                 }
@@ -121,10 +126,16 @@ namespace SA2MessageTextTool
                 string controls = contents.Substring(0, contents.IndexOf(' '));
 
                 bool? is2p = controls.IndexOf('D') != -1 ? true : null;
-                string text = contents.Substring(contents.IndexOf(' ') + 1);                
+                string text = contents.Substring(contents.IndexOf(' ') + 1);
 
-                bool centered = text.StartsWith('\a');
-                text = centered ? text.Substring(1) : text;
+                Centered? centered = null;
+
+                if (text.StartsWith('\a'))
+                    centered = Centered.Block;
+                else if (text.StartsWith('\t'))
+                    centered = Centered.EachLine;
+
+                text = centered.HasValue ? text.Substring(1) : text;
 
                 hintsPerPiece.Add(new Message(null, null, is2p, centered, text));
 
@@ -152,7 +163,13 @@ namespace SA2MessageTextTool
                 if (config.ModifiedCodepage == true)
                     text = text.ConvertToModifiedCodepage();
 
-                bool? centered = text.StartsWith('\a') == true ? true : null;
+                Centered? centered = null;
+
+                if (text.StartsWith('\a'))
+                    centered = Centered.Block;
+                else if (text.StartsWith('\t'))
+                    centered = Centered.EachLine;
+
                 text = centered != null ? text.Substring(1) : text;
 
                 linesList.Add(new Message(null, null, null, centered, text));
@@ -176,9 +193,14 @@ namespace SA2MessageTextTool
                 reader.BaseStream.Position = pointer;
                 string text = reader.ReadChaoName();
 
-                bool? centered = text.StartsWith('\a') == true ? true : null;
-                text = centered == true ? text.Substring(1) : text;
+                Centered? centered = null;
 
+                if (text.StartsWith('\a'))
+                    centered = Centered.Block;
+                else if (text.StartsWith('\t'))
+                    centered = Centered.EachLine;
+
+                text = centered.HasValue ? text.Substring(1) : text;
                 linesList.Add(new Message(null, null, null, centered, text));
             }
 
@@ -211,7 +233,7 @@ namespace SA2MessageTextTool
                     builder.Append(' ');
 
                     if (line.Centered.HasValue)
-                        builder.Append('\a');
+                        builder.Append((char)line.Centered);
 
                     builder.Append(line.Text);
                 }
@@ -241,7 +263,7 @@ namespace SA2MessageTextTool
                     builder.Append(' ');
 
                     if (hint.Centered.HasValue)
-                        builder.Append('\a');
+                        builder.Append((char)hint.Centered);
 
                     builder.Append(hint.Text);
 
@@ -264,7 +286,7 @@ namespace SA2MessageTextTool
                     var builder = new StringBuilder();
 
                     if (line.Centered.HasValue)
-                        builder.Append('\a');
+                        builder.Append((char)line.Centered);
 
                     builder.Append(line.Text);
 

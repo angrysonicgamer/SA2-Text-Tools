@@ -44,10 +44,10 @@ namespace SA2MessageTextTool
                     foreach (var line in linesList)
                     {
                         string text = $"\"Text\": \"{line.Text.Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
-                        string voice = line.Voice != null ? $", \"Voice\": {line.Voice}" : "";
-                        string duration = line.Duration != null ? $", \"Duration\": {line.Duration}" : "";
-                        string centered = line.Centered != null ? $", \"Centered\": {line.Centered.ToString().ToLower()}" : "";
-                        string is2p = line.Is2PPiece != null ? $", \"2P Piece\": {line.Is2PPiece.ToString().ToLower()}" : "";
+                        string voice = line.Voice.HasValue ? $", \"Voice\": {line.Voice}" : "";
+                        string duration = line.Duration.HasValue ? $", \"Duration\": {line.Duration}" : "";
+                        string centered = line.Centered.HasValue ? $", \"Centered\": \"{line.Centered}\"" : "";
+                        string is2p = line.Is2PPiece.HasValue ? $", \"2P Piece\": {line.Is2PPiece.ToString().ToLower()}" : "";
 
                         string msg = $"\t\t\t{{ {text}{voice}{duration}{centered}{is2p} }},";
                         json.Add(msg);
