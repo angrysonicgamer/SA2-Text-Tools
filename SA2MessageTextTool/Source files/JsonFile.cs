@@ -7,20 +7,15 @@ namespace SA2MessageTextTool
 {
     public static class JsonFile
     {
-        public static List<List<Message>> Read(string jsonFile)
+        public static JsonContents Read(string jsonFile)
         {
-            string fileName = Path.GetFileNameWithoutExtension(jsonFile);
             var json = JsonNode.Parse(File.ReadAllText(jsonFile));
-            return JsonSerializer.Deserialize<List<List<Message>>>(json[fileName]);
-        }
+            return JsonSerializer.Deserialize<JsonContents>(json);
+        } 
 
-        public static void Write(string outputFile, List<List<Message>> fileContents, AppConfig config)
+        public static void Write(JsonContents jsonContents, AppConfig config)
         {
-            string fileName = Path.GetFileNameWithoutExtension(outputFile);
-            var jsonContents = new Dictionary<string, List<List<Message>>>()
-            {
-                { fileName, fileContents },
-            };
+            string jsonFile = $"{jsonContents.Name}.json";
 
             if (config.JsonStyle == JsonStyle.Indented)
             {
@@ -32,13 +27,13 @@ namespace SA2MessageTextTool
                 };
 
                 var json = JsonSerializer.Serialize(jsonContents, options);
-                File.WriteAllText(outputFile, json);
+                File.WriteAllText(jsonFile, json);
             }
             else
             {
-                var json = new List<string>() { $"{{\n\t\"{fileName}\": [" };
+                var json = new List<string>() { $"{{\n\t\"Name\": \"{jsonContents.Name}\",\n\t\"Messages\": [" };
 
-                foreach (var linesList in fileContents)
+                foreach (var linesList in jsonContents.Messages)
                 {
                     json.Add("\t\t[");
                     foreach (var line in linesList)
@@ -59,8 +54,10 @@ namespace SA2MessageTextTool
                 json[json.Count - 1] = json[json.Count - 1].TrimEnd(',');
                 json.Add("\t]\n}");
 
-                File.WriteAllLines(outputFile, json);
-            }            
+                File.WriteAllLines(jsonFile, json);
+                DisplayMessage.Config(config);
+                DisplayMessage.JsonCreated(jsonFile);
+            }
         }
     }
 }

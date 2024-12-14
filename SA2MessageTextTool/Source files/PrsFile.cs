@@ -5,10 +5,10 @@ namespace SA2MessageTextTool
 {
     public static class PrsFile
     {
-        public static List<List<Message>> Read(string inputFile, AppConfig config)
+        public static JsonContents Read(string prsFile, AppConfig config)
         {
-            var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
-            string fileName = Path.GetFileNameWithoutExtension(inputFile);
+            var decompressedFile = Prs.Decompress(File.ReadAllBytes(prsFile));
+            string fileName = Path.GetFileNameWithoutExtension(prsFile);
 
             var pointers = ReadOffsets(decompressedFile, config);
             var messages = new List<List<Message>>();
@@ -22,20 +22,20 @@ namespace SA2MessageTextTool
             else
                 messages = ReadSimpleText(decompressedFile, pointers, config);
 
-            return messages;
-        } 
+            return new JsonContents(fileName, messages);
+        }
 
-        public static void Write(string outputFile, List<List<Message>> jsonContents, AppConfig config)
+        public static void Write(JsonContents jsonContents, AppConfig config)
         {
-            string fileName = Path.GetFileNameWithoutExtension(outputFile);
+            string fileName = jsonContents.Name;
             var strings = new List<string>();
 
             if (fileName.ToLower().StartsWith("eh"))
-                strings = GetEmeraldHintStrings(jsonContents);
+                strings = GetEmeraldHintStrings(jsonContents.Messages);
             else if (fileName.ToLower().StartsWith("mh"))
-                strings = GetCombinedMessageStrings(jsonContents);            
+                strings = GetCombinedMessageStrings(jsonContents.Messages);
             else
-                strings = GetSimpleStrings(jsonContents);
+                strings = GetSimpleStrings(jsonContents.Messages);
 
             bool isChaoNames = fileName.StartsWith("MsgAlKinderFoName");
 
@@ -43,8 +43,11 @@ namespace SA2MessageTextTool
             var contents = GetFileContents(cText, config);
 
             string destinationFolder = "New files";
+            string prsFile = $"{destinationFolder}\\{fileName}.prs";
             Directory.CreateDirectory(destinationFolder);
-            File.WriteAllBytes($"{destinationFolder}\\{outputFile}", Prs.Compress(contents, 0x1FFF));
+            File.WriteAllBytes(prsFile, Prs.Compress(contents, 0x1FFF));
+            DisplayMessage.Config(config);
+            DisplayMessage.FileSaved($"{fileName}.prs");
         }
 
 
@@ -88,10 +91,10 @@ namespace SA2MessageTextTool
                     string controls = line.Substring(0, line.IndexOf(' '));
 
                     string? voice = controls.IndexOf('s') != -1 ? controls.Substring(controls.IndexOf('s') + 1, controls.IndexOf('w') - controls.IndexOf('s') - 1) : null;
-                    int? voiceID = voice == null ? null : int.Parse(voice);
+                    int? voiceID = voice != null ? int.Parse(voice) : null;
 
-                    string? framecount = controls.IndexOf('w') != -1 ? controls.Substring(controls.IndexOf('w') + 1) : null;
-                    int? duration = framecount == null ? null : int.Parse(framecount);
+                    string? frameCount = controls.IndexOf('w') != -1 ? controls.Substring(controls.IndexOf('w') + 1) : null;
+                    int? duration = frameCount != null ? int.Parse(frameCount) : null;
 
                     string text = line.Substring(line.IndexOf(' ') + 1);
                     Centered? centered = null;
@@ -102,7 +105,6 @@ namespace SA2MessageTextTool
                         centered = Centered.EachLine;
 
                     text = centered.HasValue ? text.Substring(1) : text;
-
                     linesList.Add(new Message(voiceID, duration, null, centered, text));
                 }
 
@@ -173,7 +175,7 @@ namespace SA2MessageTextTool
                 else if (text.StartsWith('\t'))
                     centered = Centered.EachLine;
 
-                text = centered != null ? text.Substring(1) : text;
+                text = centered.HasValue ? text.Substring(1) : text;
 
                 linesList.Add(new Message(null, null, null, centered, text));
             }
