@@ -54,10 +54,11 @@ namespace SA2MessageTextTool
                 json[json.Count - 1] = json[json.Count - 1].TrimEnd(',');
                 json.Add("\t]\n}");
 
-                File.WriteAllLines(jsonFile, json);
-                DisplayMessage.Config(config);
-                DisplayMessage.JsonCreated(jsonFile);
+                File.WriteAllLines(jsonFile, json);                
             }
+
+            DisplayMessage.Config(config);
+            DisplayMessage.JsonCreated(jsonFile);
         }
     }
 }
