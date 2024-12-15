@@ -58,22 +58,7 @@ namespace SA2CutsceneTextTool
             MessagePointer = offset;
             TotalLines = total;
         }
-    }
-
-    public class Scene
-    {
-        public int EventID { get; set; }
-        public List<Message> Messages { get; set; }
-
-        [JsonConstructor]
-        public Scene() { }
-
-        public Scene(int eventID, List<Message> messages)
-        {
-            EventID = eventID;
-            Messages = messages;
-        }
-    }
+    }    
 
     public class Message
     {
@@ -91,32 +76,33 @@ namespace SA2CutsceneTextTool
         }
     }
 
-    public class MessagePrs
+    public class Scene
     {
-        public int Character { get; set; }
-        public uint TextPointer { get; set; }
-        public static uint Size => 8;
+        public int EventID { get; set; }
+        public List<Message> Messages { get; set; }
 
-        public MessagePrs(int character, uint textPtr)
+        [JsonConstructor]
+        public Scene() { }
+
+        public Scene(int eventID, List<Message> messages)
         {
-            Character = character;
-            TextPointer = textPtr;
+            EventID = eventID;
+            Messages = messages;
         }
     }
 
-    public struct CsvMessage
+    public class EventFile
     {
-        public string EventID { get; set; }
-        public string Character { get; set; }
-        public string Centered { get; set; }
-        public string Text { get; set; }
+        public string Name { get; set; }
+        public List<Scene> Events { get; set; }
 
-        public CsvMessage(string id, string character, string centered, string text)
+        [JsonConstructor]
+        public EventFile() { }
+
+        public EventFile(string name, List<Scene> events)
         {
-            EventID = id;
-            Character = character;
-            Centered = centered;
-            Text = text;
+            Name = name;
+            Events = events;
         }
     }
 }

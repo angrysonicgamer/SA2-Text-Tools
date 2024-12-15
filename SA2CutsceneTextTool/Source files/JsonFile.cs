@@ -7,26 +7,19 @@ namespace SA2CutsceneTextTool
 {
     public static class JsonFile
     {
-        public static List<Scene> Read(string jsonFile)
+        public static EventFile Read(string jsonFile)
         {
-            string fileName = Path.GetFileNameWithoutExtension(jsonFile);
             var json = JsonNode.Parse(File.ReadAllText(jsonFile));
-
-            return JsonSerializer.Deserialize<List<Scene>>(json[fileName]);
+            return JsonSerializer.Deserialize<EventFile>(json);
         }
         
         
-        public static void Write(string outputFile, List<Scene> jsonData, AppConfig config)
+        public static void Write(EventFile data, AppConfig config)
         {
-            string fileName = Path.GetFileNameWithoutExtension(outputFile);
-
+            string jsonFile = $"{data.Name}.json";
+            
             if (config.JsonStyle == JsonStyle.Indented)
             {
-                var jsonContents = new Dictionary<string, List<Scene>>()
-                {
-                    { fileName, jsonData }
-                };
-                
                 var options = new JsonSerializerOptions()
                 {
                     WriteIndented = true,
@@ -34,14 +27,14 @@ namespace SA2CutsceneTextTool
                     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                 };
 
-                var json = JsonSerializer.Serialize(jsonContents, options);
-                File.WriteAllText($"{fileName}.json", json);
+                var json = JsonSerializer.Serialize(data, options);
+                File.WriteAllText(jsonFile, json);
             }
             else
             {
-                var json = new List<string>() { $"{{\n\t\"{fileName}\": [" };
+                var json = new List<string>() { $"{{\n\t\"Name\": \"{data.Name}\",\n\t\"Events\": [" };
 
-                foreach (var scene in jsonData.OrderBy(x => x.EventID).ToList())
+                foreach (var scene in data.Events.OrderBy(x => x.EventID).ToList())
                 {
                     json.Add($"\t\t{{\n\t\t\t\"EventID\": {scene.EventID},\n\t\t\t\"Messages\": [");
 
@@ -61,11 +54,11 @@ namespace SA2CutsceneTextTool
                 json[json.Count - 1] = json[json.Count - 1].TrimEnd(',');
                 json.Add("\t]\n}");
 
-                File.WriteAllLines(outputFile, json);
+                File.WriteAllLines(jsonFile, json);
             }
 
             DisplayMessage.Config(config);
-            DisplayMessage.TextExtracted(outputFile);
+            DisplayMessage.TextExtracted(jsonFile);
         }
     }
 }

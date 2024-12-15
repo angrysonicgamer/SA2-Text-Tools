@@ -4,6 +4,12 @@ namespace SA2CutsceneTextTool
 {
     public static class Program
     {
+        private static void SetAppTitle()
+        {
+            Console.Title = "SA2 Cutscene Text Tool";
+        }
+
+
         public static void Main(string[] args)
         {
             SetAppTitle();
@@ -37,52 +43,36 @@ namespace SA2CutsceneTextTool
 
             if (fileExtension == ".prs")
             {
-                var eventData = PrsFile.Read(sourceFile, config);
-                
-                string outputJson = GetOutputFileName(sourceFile, ".json");
-                string outputCsv = GetOutputFileName(sourceFile, ".csv");
+                var extractedData = PrsFile.Read(sourceFile, config);
 
                 if (config.Export == Export.JSON)
                 {
-                    JsonFile.Write(outputJson, eventData, config);
+                    JsonFile.Write(extractedData, config);
                 }
                 else // if CSV
                 {
-                    var csvEventData = CsvFile.GetCsvData(eventData);
-                    CsvFile.Write(outputCsv, csvEventData, config);
+                    CsvFile.Write(extractedData, config);
                 }
             }
             else if (fileExtension == ".json" || fileExtension == ".csv")
             {
-                var fileContents = new List<Scene>();
+                var extractedData = new EventFile();
 
                 if (fileExtension == ".csv")
                 {
-                    fileContents = CsvFile.Read(args[0]);                    
+                    extractedData = CsvFile.Read(sourceFile);
                 }
                 else // if .json
                 {
-                    fileContents = JsonFile.Read(args[0]);
+                    extractedData = JsonFile.Read(sourceFile);
                 }
 
-                string outputFile = GetOutputFileName(args[0], ".prs");
-                PrsFile.Write(outputFile, fileContents, config);
+                PrsFile.Write(extractedData, config);
             }
             else
             {
                 DisplayMessage.WrongExtension();
             }
-        }
-
-
-        private static void SetAppTitle()
-        {
-            Console.Title = "SA2 Cutscene Text Tool";
-        }
-
-        private static string GetOutputFileName(string inputFile, string extension)
-        {
-            return Path.GetFileNameWithoutExtension(inputFile) + extension;
         }
     }
 }

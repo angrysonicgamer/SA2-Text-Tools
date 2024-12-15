@@ -2,26 +2,44 @@
 
 namespace SA2CutsceneTextTool
 {
+    public class MessagePrs
+    {
+        public int Character { get; set; }
+        public uint TextPointer { get; set; }
+        public static uint Size => 8;
+
+        public MessagePrs(int character, uint textPtr)
+        {
+            Character = character;
+            TextPointer = textPtr;
+        }
+    }
+
+
     public static class PrsFile
     {
-        public static List<Scene> Read(string inputFile, AppConfig config)
+        public static EventFile Read(string prsFile, AppConfig config)
         {
-            var decompressedFile = Prs.Decompress(File.ReadAllBytes(inputFile));
-            return ReadEventData(decompressedFile, config);
+            var decompressedFile = Prs.Decompress(File.ReadAllBytes(prsFile));
+            string fileName = Path.GetFileNameWithoutExtension(prsFile);
+            var events = ReadEventData(decompressedFile, config);
+            return new EventFile(fileName, events);
         }
 
-        public static void Write(string outputFile, List<Scene> eventData, AppConfig config)
+        public static void Write(EventFile data, AppConfig config)
         {
-            var strings = GetCStrings(eventData, config);
-            var header = CalculateHeader(eventData);
-            var messageData = CalculateMessageData(eventData, config);
-            var contents = MergeContents(header, messageData, strings, config);
+            string fileName = data.Name;
+            var strings = GetCStrings(data.Events, config);
+            var header = CalculateHeader(data.Events);
+            var messageData = CalculateMessageData(data.Events, config);
+            var binary = MergeContents(header, messageData, strings, config);
 
             string destinationFolder = "New files";
+            string prsFile = $"{destinationFolder}\\{fileName}.prs";
             Directory.CreateDirectory(destinationFolder);
-            File.WriteAllBytes($"{destinationFolder}\\{outputFile}", Prs.Compress(contents, 0x1FFF));
+            File.WriteAllBytes(prsFile, Prs.Compress(binary, 0x1FFF));
             DisplayMessage.Config(config);
-            DisplayMessage.FileSaved(outputFile);
+            DisplayMessage.FileSaved($"{fileName}.prs");
         }
 
 

@@ -17,6 +17,8 @@ namespace SA2CutsceneTextTool
         };
 
                 
+        // string
+
         public static string ConvertToModifiedCodepage(this string text, TextConversionMode mode = TextConversionMode.Default)
         {
             foreach (var pair in lettersToConvert)
@@ -29,6 +31,9 @@ namespace SA2CutsceneTextTool
 
             return text;
         }        
+
+        
+        // BinaryReader
 
         public static int ReadInt32(this BinaryReader reader, Endianness endianness)
         {
@@ -60,12 +65,6 @@ namespace SA2CutsceneTextTool
 
         public static string ReadCString(this BinaryReader reader, Encoding encoding)
         {
-            return encoding.GetString(reader.ReadBytesUntilNullTerminator());
-        }
-
-
-        private static byte[] ReadBytesUntilNullTerminator(this BinaryReader reader)
-        {
             var bytes = new List<byte>();
 
             while (true)
@@ -76,7 +75,7 @@ namespace SA2CutsceneTextTool
                 bytes.Add(b);
             }
 
-            return bytes.ToArray();
-        }        
+            return encoding.GetString(bytes.ToArray());
+        }
     }
 }

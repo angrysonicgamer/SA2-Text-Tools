@@ -3,11 +3,31 @@ using System.Globalization;
 
 namespace SA2CutsceneTextTool
 {
+    public class CsvMessage
+    {
+        public string EventID { get; set; }
+        public string Character { get; set; }
+        public string Centered { get; set; }
+        public string Text { get; set; }
+
+        public CsvMessage() { }
+
+        public CsvMessage(string id, string character, string centered, string text)
+        {
+            EventID = id;
+            Character = character;
+            Centered = centered;
+            Text = text;
+        }
+    }
+
+
     public static class CsvFile
     {
-        public static List<Scene> Read(string inputFile)
+        public static EventFile Read(string prsFile)
         {
-            var reader = new StreamReader(inputFile);
+            string fileName = Path.GetFileNameWithoutExtension(prsFile);
+            var reader = new StreamReader(prsFile);
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
 
             var records = csv.GetRecords<CsvMessage>().ToList();
@@ -33,11 +53,35 @@ namespace SA2CutsceneTextTool
                 eventData.Add(new Scene(entry.Key, entry.Value));
             }
 
-            return eventData;
+            return new EventFile(fileName, eventData);
+        }
+
+        public static void Write(EventFile data, AppConfig config)
+        {
+            string csvFile = $"{data.Name}.csv";
+            var csvData = GetCsvData(data.Events);
+            
+            var writer = new StreamWriter(csvFile);
+            var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+            csv.WriteHeader<CsvMessage>();
+            csv.NextRecord();
+            csv.NextRecord();
+
+            foreach (var line in csvData)
+            {
+                csv.WriteRecords(line);
+                csv.NextRecord();
+            }
+
+            writer.Flush();
+            writer.Dispose();
+            DisplayMessage.Config(config);
+            DisplayMessage.TextExtracted(csvFile);
         }
 
 
-        public static List<List<CsvMessage>> GetCsvData(List<Scene> eventData)
+        private static List<List<CsvMessage>> GetCsvData(List<Scene> eventData)
         {
             var csvData = new List<List<CsvMessage>>();
 
@@ -55,26 +99,6 @@ namespace SA2CutsceneTextTool
             }
 
             return csvData;
-        }
-
-        public static void Write(string outputFile, List<List<CsvMessage>> csvData, AppConfig config)
-        {
-            var writer = new StreamWriter(outputFile);
-            var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-
-            csv.WriteHeader<CsvMessage>();
-            csv.NextRecord();
-            csv.NextRecord();
-            foreach (var line in csvData)
-            {
-                csv.WriteRecords(line);
-                csv.NextRecord();
-            }
-
-            writer.Flush();
-
-            DisplayMessage.Config(config);
-            DisplayMessage.TextExtracted(outputFile);
         }
     }
 }
