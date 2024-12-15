@@ -1,11 +1,16 @@
 ﻿namespace SA2SubtitlesTimingTool
 {
-    public struct Pointer
+    public class Pointer
     {
-        public static uint BaseAddress = 0x817AFE60;
+        public static uint BaseAddress { get; set; }
+
+        public static void SetBaseAddress(AppConfig config)
+        {
+            BaseAddress = config.Endianness == Endianness.BigEndian ? 0x817AFE60 : 0xCBD0000;
+        }
     }
 
-    public struct Cutscene
+    public class Cutscene
     {
         public int EventID { get; set; }
         public uint MessagePointer { get; set; }
@@ -20,7 +25,7 @@
         }
     }
 
-    public struct Message
+    public class Message
     {
         public int Character { get; set; }
         public string Text { get; set; }
@@ -33,11 +38,13 @@
         }
     }
 
-    public struct CsvSubtitleInfo
+    public class CsvSubtitleInfo
     {
         public string Text { get; set; }
         public int FrameStart { get; set; }
         public uint Duration { get; set; } // if FrameStart = -1, this acts as an X coordinate of the timestamp
+
+        public CsvSubtitleInfo() { }
 
         public CsvSubtitleInfo(string text, int frameStart, uint duration)
         {

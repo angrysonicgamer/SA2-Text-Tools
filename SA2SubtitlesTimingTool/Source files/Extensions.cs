@@ -23,6 +23,8 @@ namespace SA2SubtitlesTimingTool
         };
 
 
+        // string
+
         public static string ConvertToModifiedCodepage(this string text, TextConversionMode mode = TextConversionMode.Default)
         {
             foreach (var pair in lettersToConvert)
@@ -35,6 +37,9 @@ namespace SA2SubtitlesTimingTool
 
             return text;
         }
+
+
+        // BinaryReader
 
         public static int ReadInt32(this BinaryReader reader, Endianness endianness)
         {
@@ -66,21 +71,17 @@ namespace SA2SubtitlesTimingTool
 
         public static string ReadCString(this BinaryReader reader, Encoding encoding)
         {
-            return encoding.GetString(reader.ReadBytesUntilNullTerminator());
-        }
-
-
-        private static byte[] ReadBytesUntilNullTerminator(this BinaryReader reader)
-        {
             var bytes = new List<byte>();
 
-            do
+            while (true)
             {
-                bytes.Add(reader.ReadByte());
-            }
-            while (bytes.Last() != 0);
+                byte b = reader.ReadByte();
+                if (b == 0) break;
 
-            return bytes.ToArray();
+                bytes.Add(b);
+            }
+
+            return encoding.GetString(bytes.ToArray());
         }
     }
 }

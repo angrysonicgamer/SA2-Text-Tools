@@ -1,0 +1,13 @@
+{
+    "Info": {
+        "Endianness": [
+            { "Value": "LittleEndian",				"Description": "Used in Dreamcast version" },
+            { "Value": "BigEndian",					"Description": "Used in all other versions (Gamecube, PC, Xbox360, PS3)" }
+        ]
+    },
+	
+	
+    "Config": {
+        "Endianness": "BigEndian"
+    }
+}
