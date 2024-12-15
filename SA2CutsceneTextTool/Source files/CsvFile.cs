@@ -17,7 +17,7 @@ namespace SA2CutsceneTextTool
             {
                 if (int.TryParse(record.EventID, out int eventID))
                 {
-                    bool centered = record.Centered == "+";
+                    Centered? centered = record.Centered != "" ? Enum.Parse<Centered>(record.Centered) : null;
 
                     if (!dict.ContainsKey(eventID))
                         dict.Add(eventID, new List<Message>());
@@ -47,7 +47,7 @@ namespace SA2CutsceneTextTool
 
                 foreach (var message in scene.Messages)
                 {
-                    string centered = message.Centered ? "+" : "";
+                    string centered = message.Centered.HasValue ? message.Centered.ToString() : "";
                     messageData.Add(new CsvMessage(scene.EventID.ToString(), message.Character.ToString(), centered, message.Text));
                 }
 

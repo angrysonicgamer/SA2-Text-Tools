@@ -48,7 +48,7 @@ namespace SA2CutsceneTextTool
                     foreach (var message in scene.Messages)
                     {
                         string character = $"\"Character\": {message.Character}";
-                        string centered = $", \"Centered\": {message.Centered.ToString().ToLower()}";
+                        string centered = message.Centered.HasValue ? $", \"Centered\": \"{message.Centered}\"" : "";
                         string text = $", \"Text\": \"{message.Text.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
 
                         json.Add($"\t\t\t\t{{ {character}{centered}{text} }},");

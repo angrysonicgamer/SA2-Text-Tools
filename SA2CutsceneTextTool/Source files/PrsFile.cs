@@ -1,5 +1,4 @@
 ﻿using csharp_prs;
-using System.Text;
 
 namespace SA2CutsceneTextTool
 {
@@ -57,7 +56,7 @@ namespace SA2CutsceneTextTool
                 if (scene.TotalLines == 0)
                 {
                     int character = reader.ReadInt32(config.Endianness);
-                    messages.Add(new Message(character, false, ""));
+                    messages.Add(new Message(character, null, ""));
                 }
 
                 for (int i = 0; i < scene.TotalLines; i++)
@@ -72,8 +71,14 @@ namespace SA2CutsceneTextTool
                     if (config.ModifiedCodepage == true)
                         text = text.ConvertToModifiedCodepage();
 
-                    bool centered = text.StartsWith('\a');
-                    text = centered ? text.Substring(1) : text;
+                    Centered? centered = null;
+
+                    if (text.StartsWith('\a'))
+                        centered = Centered.Block;
+                    else if (text.StartsWith('\t'))
+                        centered = Centered.EachLine;
+
+                    text = centered.HasValue ? text.Substring(1) : text;
 
                     reader.BaseStream.Position = currentPosition;
                     messages.Add(new Message(character, centered, text));
@@ -99,7 +104,7 @@ namespace SA2CutsceneTextTool
                 foreach (var message in scene.Messages)
                 {
                     string text = config.ModifiedCodepage == true ? message.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : message.Text;
-                    text = message.Centered ? $"\a{text}" : text;
+                    text = message.Centered.HasValue ? $"{(char)message.Centered}{text}" : text;
                     var textBytes = new List<byte>();
                     textBytes.AddRange(config.Encoding.GetBytes(text));
                     textBytes.Add(0);
@@ -149,7 +154,7 @@ namespace SA2CutsceneTextTool
                 {
                     messageData.Add(new MessagePrs(message.Character, textPointer));
                     textPointer += (uint)config.Encoding.GetByteCount(message.Text) + 1;
-                    if (message.Centered)
+                    if (message.Centered.HasValue)
                         textPointer++;
                 }
             }

@@ -27,6 +27,14 @@ namespace SA2CutsceneTextTool
         SingleLinePerEntry
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum Centered : short
+    {
+        NotCentered,        // ignored as null
+        Block = 7,          // \a
+        EachLine = 9        // \t
+    }
+
     public class Pointer
     {
         public static uint BaseAddress { get; set; }
@@ -70,12 +78,12 @@ namespace SA2CutsceneTextTool
     public class Message
     {
         public int Character { get; set; }
-        public bool Centered { get; set; }
+        public Centered? Centered { get; set; }
         public string Text { get; set; }        
 
         [JsonConstructor]
         public Message() { }
-        public Message(int character, bool centered, string text)
+        public Message(int character, Centered? centered, string text)
         {
             Character = character;
             Centered = centered;
