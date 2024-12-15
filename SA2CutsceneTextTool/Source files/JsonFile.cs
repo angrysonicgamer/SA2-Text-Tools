@@ -62,7 +62,10 @@ namespace SA2CutsceneTextTool
                 json.Add("\t]\n}");
 
                 File.WriteAllLines(outputFile, json);
-            }            
+            }
+
+            DisplayMessage.Config(config);
+            DisplayMessage.TextExtracted(outputFile);
         }
     }
 }

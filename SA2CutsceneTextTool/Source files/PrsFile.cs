@@ -16,7 +16,12 @@ namespace SA2CutsceneTextTool
             var header = CalculateHeader(eventData);
             var messageData = CalculateMessageData(eventData, config);
             var contents = MergeContents(header, messageData, strings, config);
-            File.WriteAllBytes(outputFile, Prs.Compress(contents, 0x1FFF));
+
+            string destinationFolder = "New files";
+            Directory.CreateDirectory(destinationFolder);
+            File.WriteAllBytes($"{destinationFolder}\\{outputFile}", Prs.Compress(contents, 0x1FFF));
+            DisplayMessage.Config(config);
+            DisplayMessage.FileSaved(outputFile);
         }
 
 

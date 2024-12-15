@@ -57,7 +57,7 @@ namespace SA2CutsceneTextTool
             return csvData;
         }
 
-        public static void Write(string outputFile, List<List<CsvMessage>> csvData)
+        public static void Write(string outputFile, List<List<CsvMessage>> csvData, AppConfig config)
         {
             var writer = new StreamWriter(outputFile);
             var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
@@ -72,6 +72,9 @@ namespace SA2CutsceneTextTool
             }
 
             writer.Flush();
+
+            DisplayMessage.Config(config);
+            DisplayMessage.TextExtracted(outputFile);
         }
     }
 }
