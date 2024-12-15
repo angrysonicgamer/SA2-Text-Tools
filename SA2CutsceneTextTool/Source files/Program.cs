@@ -40,11 +40,11 @@ namespace SA2CutsceneTextTool
                 string outputJson = GetOutputFileName(args[0], ".json");
                 string outputCsv = GetOutputFileName(args[0], ".csv");
 
-                if (config.Export == Export.JSON || config.Export == Export.Both)
+                if (config.Export == Export.JSON)
                 {
-                    JsonFile.Write(outputJson, eventData);
+                    JsonFile.Write(outputJson, eventData, config);
                 }
-                if (config.Export == Export.CSV || config.Export == Export.Both)
+                else // if CSV
                 {
                     var csvEventData = CsvFile.GetCsvData(eventData);
                     CsvFile.Write(outputCsv, csvEventData);

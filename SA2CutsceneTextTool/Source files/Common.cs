@@ -18,8 +18,13 @@ namespace SA2CutsceneTextTool
     public enum Export
     {
         JSON,
-        CSV,
-        Both
+        CSV
+    }
+
+    public enum JsonStyle
+    {
+        Indented,
+        SingleLinePerEntry
     }
 
     public class Pointer
