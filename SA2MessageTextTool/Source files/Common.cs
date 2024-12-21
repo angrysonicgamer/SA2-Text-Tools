@@ -22,7 +22,7 @@ namespace SA2MessageTextTool
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum Centered : short
+    public enum CenteringMethod : short
     {
         NotCentered,        // ignored as null
         Block = 7,          // \a
@@ -36,31 +36,62 @@ namespace SA2MessageTextTool
 
         [JsonPropertyName("2P Piece")]
         public bool? Is2PPiece { get; set; }
-        public Centered? Centered { get; set; }
+        public CenteringMethod? Centered { get; set; }
         public string Text { get; set; }
 
         [JsonConstructor]
         public Message() { }
 
-        public Message(int? voice, int? duration, bool? is2p, Centered? centered, string text)
+
+        public void Parse(string rawText, AppConfig config)
         {
-            Voice = voice;
-            Duration = duration;
-            Is2PPiece = is2p;
-            Centered = centered;
-            Text = text;
+            rawText = rawText.ReplaceKeyboardButtons();
+            
+            if (config.ModifiedCodepage == true)
+                rawText = rawText.ConvertToModifiedCodepage();
+
+            if (rawText.StartsWith('\x0C'))
+            {
+                string controls = rawText.Substring(0, rawText.IndexOf(' '));
+                Is2PPiece = controls.IndexOf('D') != -1 ? true : null;
+                string? voice = controls.IndexOf('s') != -1 ? controls.Substring(controls.IndexOf('s') + 1, controls.IndexOf('w') - controls.IndexOf('s') - 1) : null;
+                Voice = voice != null ? int.Parse(voice) : null;
+                string? frameCount = controls.IndexOf('w') != -1 ? controls.Substring(controls.IndexOf('w') + 1) : null;
+                Duration = frameCount != null ? int.Parse(frameCount) : null;
+                rawText = rawText.Substring(rawText.IndexOf(' ') + 1);
+            }            
+            
+            Centered = GetCenteringMethod(rawText);
+            Text = Centered.HasValue ? rawText.Substring(1) : rawText;
+        }
+
+        public void ReadChaoName(BinaryReader reader)
+        {
+            Text = reader.ReadChaoName();
+        }
+
+
+        private static CenteringMethod? GetCenteringMethod(string text)
+        {
+            if (text.StartsWith('\a'))
+                return CenteringMethod.Block;
+
+            if (text.StartsWith('\t'))
+                return CenteringMethod.EachLine;
+
+            return null;
         }
     }
 
-    public class JsonContents
+    public class MessageFile
     {
         public string Name { get; set; }
         public List<List<Message>> Messages { get; set; }
 
         [JsonConstructor]
-        public JsonContents() { }
+        public MessageFile() { }
 
-        public JsonContents(string name, List<List<Message>> messages)
+        public MessageFile(string name, List<List<Message>> messages)
         {
             Name = name;
             Messages = messages;

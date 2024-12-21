@@ -24,6 +24,8 @@ namespace SA2MessageTextTool
         };
 
 
+        // string
+
         public static string ReplaceKeyboardButtons(this string text, TextConversionMode mode = TextConversionMode.Default)
         {
             foreach (var pair in buttonsMap)
@@ -48,6 +50,37 @@ namespace SA2MessageTextTool
             }
 
             return text;
+        }
+
+
+        // BinaryReader
+
+        public static void SetPosition(this BinaryReader reader, long position)
+        {
+            reader.BaseStream.Position = position;
+        }
+
+        public static T ReadAt<T>(this BinaryReader reader, long position, Func<BinaryReader, T> func)
+        {
+            var origPosition = reader.BaseStream.Position;
+
+            if (origPosition != position)
+            {
+                reader.SetPosition(position);
+            }
+
+            T value;
+
+            try
+            {
+                value = func(reader);
+            }
+            finally
+            {
+                reader.SetPosition(origPosition);
+            }
+
+            return value;
         }
 
         public static int ReadInt32(this BinaryReader reader, Endianness endianness)

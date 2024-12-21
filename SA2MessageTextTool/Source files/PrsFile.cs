@@ -5,27 +5,38 @@ namespace SA2MessageTextTool
 {
     public static class PrsFile
     {
-        public static JsonContents Read(string prsFile, AppConfig config)
+        public static MessageFile Read(string prsFile, AppConfig config)
         {
+            DisplayMessage.ReadingFile(prsFile);
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(prsFile));
             string fileName = Path.GetFileNameWithoutExtension(prsFile);
+            var reader = new BinaryReader(new MemoryStream(decompressedFile));
 
-            var pointers = ReadOffsets(decompressedFile, config);
+            var offsets = ReadOffsets(reader, config);
             var messages = new List<List<Message>>();
 
             if (fileName.ToLower().StartsWith("eh"))
-                messages = ReadEmeraldHints(decompressedFile, pointers, config);
+            {
+                messages = ReadEmeraldHints(reader, offsets, config);
+            }                
             else if (fileName.ToLower().StartsWith("mh"))
-                messages = ReadMessages(decompressedFile, pointers, config);
+            {
+                messages = ReadGameplayMessages(reader, offsets, config);
+            }
             else if (fileName.ToLower().StartsWith("msgalkinderfoname"))
-                messages = ReadChaoNames(decompressedFile, pointers, config);
+            {
+                messages = ReadChaoNames(reader, offsets, config);
+            }                
             else
-                messages = ReadSimpleText(decompressedFile, pointers, config);
+            {
+                messages = ReadSimpleText(reader, offsets, config);
+            }
 
-            return new JsonContents(fileName, messages);
+            reader.Dispose();
+            return new MessageFile(fileName, messages);
         }
 
-        public static void Write(JsonContents jsonContents, AppConfig config)
+        public static void Write(MessageFile jsonContents, AppConfig config)
         {
             string fileName = jsonContents.Name;
             var strings = new List<string>();
@@ -53,9 +64,8 @@ namespace SA2MessageTextTool
 
         // Reading PRS file
 
-        private static List<int> ReadOffsets(byte[] decompressedFile, AppConfig config)
+        private static List<int> ReadOffsets(BinaryReader reader, AppConfig config)
         {
-            var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var offsets = new List<int>();
 
             while (true)
@@ -66,83 +76,43 @@ namespace SA2MessageTextTool
                 offsets.Add(offset);
             }
 
-            reader.Dispose();
             return offsets;
         }
 
-        private static List<List<Message>> ReadMessages(byte[] decompressedFile, List<int> offsets, AppConfig config)
+        private static List<List<Message>> ReadGameplayMessages(BinaryReader reader, List<int> offsets, AppConfig config)
         {
-            var reader = new BinaryReader(new MemoryStream(decompressedFile));
-            var messagesList = new List<List<Message>>();
+            var gameplayMessages = new List<List<Message>>();
 
             foreach (var offset in offsets)
             {
-                reader.BaseStream.Position = offset;
-                string contents = reader.ReadCString(config.Encoding).ReplaceKeyboardButtons();
-
-                if (config.ModifiedCodepage == true)
-                    contents = contents.ConvertToModifiedCodepage();
-
-                string[] lines = contents.Split(new char[] { '\x0C' }, StringSplitOptions.RemoveEmptyEntries);
+                string rawText = reader.ReadAt(offset, x => x.ReadCString(config.Encoding));
+                string[] lines = rawText.Split(new char[] { '\x0C' }, StringSplitOptions.RemoveEmptyEntries);
                 var linesList = new List<Message>();
 
                 foreach (var line in lines)
                 {
-                    string controls = line.Substring(0, line.IndexOf(' '));
-
-                    string? voice = controls.IndexOf('s') != -1 ? controls.Substring(controls.IndexOf('s') + 1, controls.IndexOf('w') - controls.IndexOf('s') - 1) : null;
-                    int? voiceID = voice != null ? int.Parse(voice) : null;
-
-                    string? frameCount = controls.IndexOf('w') != -1 ? controls.Substring(controls.IndexOf('w') + 1) : null;
-                    int? duration = frameCount != null ? int.Parse(frameCount) : null;
-
-                    string text = line.Substring(line.IndexOf(' ') + 1);
-                    Centered? centered = null;
-
-                    if (text.StartsWith('\a'))
-                        centered = Centered.Block;
-                    else if (text.StartsWith('\t'))
-                        centered = Centered.EachLine;
-
-                    text = centered.HasValue ? text.Substring(1) : text;
-                    linesList.Add(new Message(voiceID, duration, null, centered, text));
+                    var message = new Message();
+                    message.Parse($"\x0C{line}", config);
+                    linesList.Add(message);
                 }
 
-                messagesList.Add(linesList);
+                gameplayMessages.Add(linesList);
             }
 
-            return messagesList;
+            return gameplayMessages;
         }
 
-        private static List<List<Message>> ReadEmeraldHints(byte[] decompressedFile, List<int> pointers, AppConfig config)
+        private static List<List<Message>> ReadEmeraldHints(BinaryReader reader, List<int> offsets, AppConfig config)
         {
-            var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var hintsPerPiece = new List<Message>();
             var messagesList = new List<List<Message>>();
 
-            foreach (var pointer in pointers)
+            foreach (var offset in offsets)
             {
-                reader.BaseStream.Position = pointer;
-                string contents = reader.ReadCString(config.Encoding).ReplaceKeyboardButtons();
-
-                if (config.ModifiedCodepage == true)
-                    contents = contents.ConvertToModifiedCodepage();
-
-                string controls = contents.Substring(0, contents.IndexOf(' '));
-
-                bool? is2p = controls.IndexOf('D') != -1 ? true : null;
-                string text = contents.Substring(contents.IndexOf(' ') + 1);
-
-                Centered? centered = null;
-
-                if (text.StartsWith('\a'))
-                    centered = Centered.Block;
-                else if (text.StartsWith('\t'))
-                    centered = Centered.EachLine;
-
-                text = centered.HasValue ? text.Substring(1) : text;
-
-                hintsPerPiece.Add(new Message(null, null, is2p, centered, text));
+                var hint = new Message();
+                string rawText = reader.ReadAt(offset, x => x.ReadCString(config.Encoding));
+                hint.Parse(rawText, config);
+                hintsPerPiece.Add(hint);
 
                 if (hintsPerPiece.Count == 3)
                 {
@@ -154,62 +124,40 @@ namespace SA2MessageTextTool
             return messagesList;
         }
 
-        private static List<List<Message>> ReadSimpleText(byte[] decompressedFile, List<int> pointers, AppConfig config)
+        private static List<List<Message>> ReadSimpleText(BinaryReader reader, List<int> offsets, AppConfig config)
         {
-            var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var messagesList = new List<List<Message>>();
-            var linesList = new List<Message>();
+            var stringsList = new List<Message>();
 
-            foreach (var pointer in pointers)
+            foreach (var offset in offsets)
             {
-                reader.BaseStream.Position = pointer;
-                string text = reader.ReadCString(config.Encoding).ReplaceKeyboardButtons();
-
-                if (config.ModifiedCodepage == true)
-                    text = text.ConvertToModifiedCodepage();
-
-                Centered? centered = null;
-
-                if (text.StartsWith('\a'))
-                    centered = Centered.Block;
-                else if (text.StartsWith('\t'))
-                    centered = Centered.EachLine;
-
-                text = centered.HasValue ? text.Substring(1) : text;
-
-                linesList.Add(new Message(null, null, null, centered, text));
+                var hint = new Message();
+                string rawText = reader.ReadAt(offset, x => x.ReadCString(config.Encoding));
+                hint.Parse(rawText, config);
+                stringsList.Add(hint);
             }
 
-            messagesList.Add(linesList);
+            messagesList.Add(stringsList);
 
             return messagesList;
         }
 
-        private static List<List<Message>> ReadChaoNames(byte[] decompressedFile, List<int> pointers, AppConfig config)
+        private static List<List<Message>> ReadChaoNames(BinaryReader reader, List<int> offsets, AppConfig config)
         {
-            var reader = new BinaryReader(new MemoryStream(decompressedFile));
             var messagesList = new List<List<Message>>();
-            var linesList = new List<Message>();
+            var namesList = new List<Message>();
 
             ChaoTextConverter.SetCharacterTable(config);
 
-            foreach (var pointer in pointers)
+            foreach (var offset in offsets)
             {
-                reader.BaseStream.Position = pointer;
-                string text = reader.ReadChaoName();
-
-                Centered? centered = null;
-
-                if (text.StartsWith('\a'))
-                    centered = Centered.Block;
-                else if (text.StartsWith('\t'))
-                    centered = Centered.EachLine;
-
-                text = centered.HasValue ? text.Substring(1) : text;
-                linesList.Add(new Message(null, null, null, centered, text));
+                var chaoName = new Message();
+                reader.SetPosition(offset);
+                chaoName.ReadChaoName(reader);
+                namesList.Add(chaoName);
             }
 
-            messagesList.Add(linesList);
+            messagesList.Add(namesList);
 
             return messagesList;
         }

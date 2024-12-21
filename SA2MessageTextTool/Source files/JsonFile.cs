@@ -7,13 +7,14 @@ namespace SA2MessageTextTool
 {
     public static class JsonFile
     {
-        public static JsonContents Read(string jsonFile)
+        public static MessageFile Read(string jsonFile)
         {
+            DisplayMessage.ReadingFile(jsonFile);
             var json = JsonNode.Parse(File.ReadAllText(jsonFile));
-            return JsonSerializer.Deserialize<JsonContents>(json);
+            return JsonSerializer.Deserialize<MessageFile>(json);
         } 
 
-        public static void Write(JsonContents jsonContents, AppConfig config)
+        public static void Write(MessageFile jsonContents, AppConfig config)
         {
             string jsonFile = $"{jsonContents.Name}.json";
 
