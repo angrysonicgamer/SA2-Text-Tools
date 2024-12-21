@@ -30,10 +30,38 @@ namespace SA2CutsceneTextTool
             }
 
             return text;
-        }        
+        }
 
-        
+
         // BinaryReader
+
+        public static void SetPosition(this BinaryReader reader, long position)
+        {
+            reader.BaseStream.Position = position;
+        }
+
+        public static T ReadAt<T>(this BinaryReader reader, long position, Func<BinaryReader, T> func)
+        {
+            var origPosition = reader.BaseStream.Position;
+
+            if (origPosition != position)
+            {
+                reader.SetPosition(position);
+            }
+
+            T value;
+
+            try
+            {
+                value = func(reader);
+            }
+            finally
+            {
+                reader.SetPosition(origPosition);
+            }
+
+            return value;
+        }
 
         public static int ReadInt32(this BinaryReader reader, Endianness endianness)
         {

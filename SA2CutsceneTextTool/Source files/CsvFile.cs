@@ -24,10 +24,11 @@ namespace SA2CutsceneTextTool
 
     public static class CsvFile
     {
-        public static EventFile Read(string prsFile)
+        public static EventFile Read(string csvFile)
         {
-            string fileName = Path.GetFileNameWithoutExtension(prsFile);
-            var reader = new StreamReader(prsFile);
+            DisplayMessage.ReadingFile(csvFile);
+            string fileName = Path.GetFileNameWithoutExtension(csvFile);
+            var reader = new StreamReader(csvFile);
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
 
             var records = csv.GetRecords<CsvMessage>().ToList();
@@ -37,7 +38,7 @@ namespace SA2CutsceneTextTool
             {
                 if (int.TryParse(record.EventID, out int eventID))
                 {
-                    Centered? centered = record.Centered != "" ? Enum.Parse<Centered>(record.Centered) : null;
+                    CenteringMethod? centered = record.Centered != "" ? Enum.Parse<CenteringMethod>(record.Centered) : null;
 
                     if (!dict.ContainsKey(eventID))
                         dict.Add(eventID, new List<Message>());

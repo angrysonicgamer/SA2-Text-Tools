@@ -1,17 +1,34 @@
 ﻿using csharp_prs;
+using System.Text;
 
 namespace SA2CutsceneTextTool
 {
-    public class MessagePrs
+    public class PrsMessage(int character, uint textPtr, string text)
     {
-        public int Character { get; set; }
-        public uint TextPointer { get; set; }
+        public int Character => character;
+        public uint TextPointer => textPtr;
+        public string RawText => text;
         public static uint Size => 8;
 
-        public MessagePrs(int character, uint textPtr)
+        public void WriteMessageData(ref List<byte> writeTo, Endianness endianness)
         {
-            Character = character;
-            TextPointer = textPtr;
+            byte[] character = BitConverter.GetBytes(Character);
+            byte[] textPtr = BitConverter.GetBytes(TextPointer);
+
+            if (endianness == Endianness.BigEndian)
+            {
+                character = character.Reverse().ToArray();
+                textPtr = textPtr.Reverse().ToArray();
+            }
+
+            writeTo.AddRange(character);
+            writeTo.AddRange(textPtr);
+        }
+
+        public void WriteText(ref List<byte> writeTo, Encoding encoding)
+        {
+            writeTo.AddRange(encoding.GetBytes(RawText));
+            writeTo.Add(0);
         }
     }
 
@@ -20,6 +37,7 @@ namespace SA2CutsceneTextTool
     {
         public static EventFile Read(string prsFile, AppConfig config)
         {
+            DisplayMessage.ReadingFile(prsFile);
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(prsFile));
             string fileName = Path.GetFileNameWithoutExtension(prsFile);
             var events = ReadEventData(decompressedFile, config);
@@ -29,10 +47,9 @@ namespace SA2CutsceneTextTool
         public static void Write(EventFile data, AppConfig config)
         {
             string fileName = data.Name;
-            var strings = GetCStrings(data.Events, config);
-            var header = CalculateHeader(data.Events);
-            var messageData = CalculateMessageData(data.Events, config);
-            var binary = MergeContents(header, messageData, strings, config);
+            var header = GenerateEventInfo(data.Events);
+            var messageData = GenerateMessageData(data.Events, config);
+            var binary = WriteDecompressedBinary(header, messageData, config);
 
             string destinationFolder = "New files";
             string prsFile = $"{destinationFolder}\\{fileName}.prs";
@@ -45,66 +62,47 @@ namespace SA2CutsceneTextTool
 
         // PRS file reading
 
-        private static List<CutsceneHeader> ReadHeader(byte[] decompressedFile, Endianness endianness)
+        private static List<EventInfo> ReadEventInfoList(BinaryReader reader, Endianness endianness)
         {
-            var reader = new BinaryReader(new MemoryStream(decompressedFile));
-            var header = new List<CutsceneHeader>();
+            var eventInfoList = new List<EventInfo>();
 
             while (true)
             {
-                int eventID = reader.ReadInt32(endianness);
-                if (eventID == -1) break;
+                var eventInfo = new EventInfo();
+                eventInfo.Read(reader, endianness);
 
-                uint messagePointer = reader.ReadUInt32(endianness);
-                int totalLines = reader.ReadInt32(endianness);                
-
-                header.Add(new CutsceneHeader(eventID, messagePointer, totalLines));
+                if (eventInfo.IsValid())
+                {
+                    eventInfoList.Add(eventInfo);
+                }                    
+                else break;
             }
 
-            reader.Dispose();
-            return header;
+            return eventInfoList;
         }
 
         private static List<Scene> ReadEventData(byte[] decompressedFile, AppConfig config)
         {
             var reader = new BinaryReader(new MemoryStream(decompressedFile));
-            var header = ReadHeader(decompressedFile, config.Endianness);
+            var sceneInfoList = ReadEventInfoList(reader, config.Endianness);
             var eventData = new List<Scene>();
 
-            foreach (var scene in header)
+            foreach (var scene in sceneInfoList)
             {
                 var messages = new List<Message>();
-                reader.BaseStream.Position = scene.MessagePointer - Pointer.BaseAddress;
+                reader.SetPosition(scene.MessagePointer - Pointer.BaseAddress);
 
-                if (scene.TotalLines == 0)
+                if (scene.TotalMessages == 0)
                 {
                     int character = reader.ReadInt32(config.Endianness);
                     messages.Add(new Message(character, null, ""));
                 }
 
-                for (int i = 0; i < scene.TotalLines; i++)
-                {
-                    int character = reader.ReadInt32(config.Endianness);
-                    uint textOffset = reader.ReadUInt32(config.Endianness) - Pointer.BaseAddress;
-
-                    long currentPosition = reader.BaseStream.Position;
-                    reader.BaseStream.Position = textOffset;
-                    string text = reader.ReadCString(config.Encoding);
-
-                    if (config.ModifiedCodepage == true)
-                        text = text.ConvertToModifiedCodepage();
-
-                    Centered? centered = null;
-
-                    if (text.StartsWith('\a'))
-                        centered = Centered.Block;
-                    else if (text.StartsWith('\t'))
-                        centered = Centered.EachLine;
-
-                    text = centered.HasValue ? text.Substring(1) : text;
-
-                    reader.BaseStream.Position = currentPosition;
-                    messages.Add(new Message(character, centered, text));
+                for (int i = 0; i < scene.TotalMessages; i++)
+                {                    
+                    var message = new Message();
+                    message.Read(reader, config);
+                    messages.Add(message);
                 }
 
                 eventData.Add(new Scene(scene.EventID, messages));
@@ -117,32 +115,12 @@ namespace SA2CutsceneTextTool
         
 
         // Writing PRS file
-
-        private static List<byte[]> GetCStrings(List<Scene> eventData, AppConfig config)
-        {
-            var cStrings = new List<byte[]>();
-
-            foreach (var scene in eventData)
-            {
-                foreach (var message in scene.Messages)
-                {
-                    string text = config.ModifiedCodepage == true ? message.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : message.Text;
-                    text = message.Centered.HasValue ? $"{(char)message.Centered}{text}" : text;
-                    var textBytes = new List<byte>();
-                    textBytes.AddRange(config.Encoding.GetBytes(text));
-                    textBytes.Add(0);
-                    cStrings.Add(textBytes.ToArray());
-                }
-            }
-
-            return cStrings;
-        }
-
-        private static List<CutsceneHeader> CalculateHeader(List<Scene> eventData)
+                
+        private static List<EventInfo> GenerateEventInfo(List<Scene> eventData)
         {
             uint separatorLength = 12;
-            uint pointer = CutsceneHeader.Size * (uint)eventData.Count + separatorLength + Pointer.BaseAddress;
-            var header = new List<CutsceneHeader>();
+            uint messagePointer = EventInfo.Size * (uint)eventData.Count + separatorLength + Pointer.BaseAddress;
+            var eventInfoList = new List<EventInfo>();
 
             foreach (var scene in eventData)
             {
@@ -151,14 +129,22 @@ namespace SA2CutsceneTextTool
                 if (messagesCount == 1 && scene.Messages[0].Text == "")
                     messagesCount = 0;
 
-                header.Add(new CutsceneHeader(scene.EventID, pointer, messagesCount));
-                pointer += (uint)scene.Messages.Count * MessagePrs.Size;
+                eventInfoList.Add(new EventInfo(scene.EventID, messagePointer, messagesCount));
+                messagePointer += (uint)scene.Messages.Count * PrsMessage.Size;
             }
 
-            return header;
+            return eventInfoList;
         }
 
-        private static List<MessagePrs> CalculateMessageData(List<Scene> eventData, AppConfig config)
+        private static string GetRawString(Message message, AppConfig config)
+        {
+            string rawText = config.ModifiedCodepage == true ? message.Text.ConvertToModifiedCodepage(TextConversionMode.Reversed) : message.Text;
+            rawText = message.Centered.HasValue ? $"{(char)message.Centered}{rawText}" : rawText;
+
+            return rawText;
+        }
+
+        private static List<PrsMessage> GenerateMessageData(List<Scene> eventData, AppConfig config)
         {
             int totalMessagesCount = 0;
 
@@ -168,69 +154,45 @@ namespace SA2CutsceneTextTool
             }
 
             uint separatorLength = 12;
-            uint textPointer = CutsceneHeader.Size * (uint)eventData.Count + separatorLength + MessagePrs.Size * (uint)totalMessagesCount + Pointer.BaseAddress;
-            var messageData = new List<MessagePrs>();
+            uint textPointer = EventInfo.Size * (uint)eventData.Count + separatorLength + PrsMessage.Size * (uint)totalMessagesCount + Pointer.BaseAddress;
+            var messageData = new List<PrsMessage>();
 
             foreach (var scene in eventData)
             {
                 foreach (var message in scene.Messages)
                 {
-                    messageData.Add(new MessagePrs(message.Character, textPointer));
-                    textPointer += (uint)config.Encoding.GetByteCount(message.Text) + 1;
-                    if (message.Centered.HasValue)
-                        textPointer++;
+                    string rawText = GetRawString(message, config);
+                    messageData.Add(new PrsMessage(message.Character, textPointer, rawText));
+                    textPointer += (uint)config.Encoding.GetByteCount(rawText) + 1;
                 }
             }
 
             return messageData;
         }
 
-        private static byte[] MergeContents(List<CutsceneHeader> header, List<MessagePrs> messageData, List<byte[]> strings, AppConfig config)
+        private static byte[] WriteDecompressedBinary(List<EventInfo> eventInfoList, List<PrsMessage> messageData, AppConfig config)
         {
-            var contents = new List<byte>();
+            var binary = new List<byte>();
 
-            foreach (var scene in header)
+            foreach (var scene in eventInfoList)
             {
-                byte[] eventID = BitConverter.GetBytes(scene.EventID);
-                byte[] messagePtr = BitConverter.GetBytes(scene.MessagePointer);
-                byte[] totalLines = BitConverter.GetBytes(scene.TotalLines);
-
-                if (config.Endianness == Endianness.BigEndian)
-                {
-                    eventID = eventID.Reverse().ToArray();
-                    messagePtr = messagePtr.Reverse().ToArray();
-                    totalLines = totalLines.Reverse().ToArray();
-                }
-
-                contents.AddRange(eventID);
-                contents.AddRange(messagePtr);
-                contents.AddRange(totalLines);
+                scene.Write(ref binary, config.Endianness);
             }
 
-            contents.AddRange([0xFF, 0xFF, 0xFF, 0xFF]);
-            contents.AddRange([0, 0, 0, 0, 0, 0, 0, 0]);
+            binary.AddRange([0xFF, 0xFF, 0xFF, 0xFF]);
+            binary.AddRange(new byte[8]);
 
             foreach (var message in messageData)
             {
-                byte[] character = BitConverter.GetBytes(message.Character);
-                byte[] textPtr = BitConverter.GetBytes(message.TextPointer);
-
-                if (config.Endianness == Endianness.BigEndian)
-                {
-                    character = character.Reverse().ToArray();
-                    textPtr = textPtr.Reverse().ToArray();
-                }
-
-                contents.AddRange(character);
-                contents.AddRange(textPtr);
+                message.WriteMessageData(ref binary, config.Endianness);
             }
 
-            foreach (var line in strings)
+            foreach (var message in messageData)
             {
-                contents.AddRange(line);
+                message.WriteText(ref binary, config.Encoding);
             }
 
-            return contents.ToArray();
+            return binary.ToArray();
         }
     }
 }

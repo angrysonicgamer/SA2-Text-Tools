@@ -9,6 +9,7 @@ namespace SA2CutsceneTextTool
     {
         public static EventFile Read(string jsonFile)
         {
+            DisplayMessage.ReadingFile(jsonFile);
             var json = JsonNode.Parse(File.ReadAllText(jsonFile));
             return JsonSerializer.Deserialize<EventFile>(json);
         }
@@ -30,7 +31,7 @@ namespace SA2CutsceneTextTool
                 var json = JsonSerializer.Serialize(data, options);
                 File.WriteAllText(jsonFile, json);
             }
-            else
+            else // making custom json where each message is represented by a single line
             {
                 var json = new List<string>() { $"{{\n\t\"Name\": \"{data.Name}\",\n\t\"Events\": [" };
 

@@ -37,7 +37,7 @@ namespace SA2CutsceneTextTool
             }
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            AppConfig config = new();
+            var config = new AppConfig();
             config.Read();
             Pointer.SetBaseAddress(config);
 
@@ -45,7 +45,7 @@ namespace SA2CutsceneTextTool
             {
                 var extractedData = PrsFile.Read(sourceFile, config);
 
-                if (config.Export == Export.JSON)
+                if (config.Export == ExportType.JSON)
                 {
                     JsonFile.Write(extractedData, config);
                 }
@@ -56,7 +56,7 @@ namespace SA2CutsceneTextTool
             }
             else if (fileExtension == ".json" || fileExtension == ".csv")
             {
-                var extractedData = new EventFile();
+                EventFile extractedData;
 
                 if (fileExtension == ".csv")
                 {
