@@ -36,27 +36,31 @@ namespace SA2MessageTextTool
             return new MessageFile(fileName, messages);
         }
 
-        public static void Write(MessageFile jsonContents, AppConfig config)
+        public static void Write(MessageFile data, AppConfig config)
         {
-            string fileName = jsonContents.Name;
-            var strings = new List<string>();
+            string fileName = data.Name;
+            List<string> strings;
 
             if (fileName.ToLower().StartsWith("eh"))
-                strings = GetEmeraldHintStrings(jsonContents.Messages);
+            {
+                strings = GetEmeraldHintStrings(data.Messages, config);
+            }                
             else if (fileName.ToLower().StartsWith("mh"))
-                strings = GetCombinedMessageStrings(jsonContents.Messages);
+            {
+                strings = GetCombinedMessageStrings(data.Messages, config);
+            }                
             else
-                strings = GetSimpleStrings(jsonContents.Messages);
+            {
+                strings = GetSimpleStrings(data.Messages, config);
+            }                
 
-            bool isChaoNames = fileName.StartsWith("MsgAlKinderFoName");
-
-            var cText = GetCStringsAndPointers(strings, config, isChaoNames);
-            var contents = GetFileContents(cText, config);
+            bool isChaoNames = fileName.ToLower().StartsWith("msgalkinderfoname");
+            var binary = WriteDecompressedBinary(strings, config, isChaoNames);
 
             string destinationFolder = "New files";
             string prsFile = $"{destinationFolder}\\{fileName}.prs";
             Directory.CreateDirectory(destinationFolder);
-            File.WriteAllBytes(prsFile, Prs.Compress(contents, 0x1FFF));
+            File.WriteAllBytes(prsFile, Prs.Compress(binary, 0x1FFF));
             DisplayMessage.Config(config);
             DisplayMessage.FileSaved($"{fileName}.prs");
         }
@@ -165,30 +169,59 @@ namespace SA2MessageTextTool
 
         // Writing PRS
         
-        private static List<string> GetCombinedMessageStrings(List<List<Message>> jsonContents)
+        private static string GetRawString(Message message, AppConfig config)
+        {
+            var builder = new StringBuilder();
+            bool hasControls = message.Voice.HasValue || message.Duration.HasValue || message.Is2PPiece.HasValue;
+
+            if (hasControls)
+            {
+                builder.Append('\x0C');
+
+                if (message.Voice.HasValue)
+                {
+                    builder.Append($"s{message.Voice}");
+                }                    
+
+                if (message.Duration.HasValue)
+                {
+                    builder.Append($"w{message.Duration}");
+                }                    
+
+                if (message.Is2PPiece.HasValue)
+                {
+                    builder.Append('D');
+                }                   
+
+                builder.Append(' ');
+            }            
+
+            if (message.Centered.HasValue)
+            {
+                builder.Append((char)message.Centered);
+            }                
+
+            builder.Append(message.Text);
+            string text = builder.ToString();
+
+            if (config.ModifiedCodepage == true)
+                text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
+            
+            text = text.ReplaceKeyboardButtons(TextConversionMode.Reversed);
+            return text;
+        } 
+
+        private static List<string> GetCombinedMessageStrings(List<List<Message>> messages, AppConfig config)
         {
             var combinedStrings = new List<string>();
 
-            foreach (var group in jsonContents)
+            foreach (var group in messages)
             {
                 var builder = new StringBuilder();
 
                 foreach (var line in group)
                 {
-                    builder.Append('\x0C');
-
-                    if (line.Voice.HasValue)
-                        builder.Append($"s{line.Voice}");
-
-                    if (line.Duration.HasValue)
-                        builder.Append($"w{line.Duration}");
-
-                    builder.Append(' ');
-
-                    if (line.Centered.HasValue)
-                        builder.Append((char)line.Centered);
-
-                    builder.Append(line.Text);
+                    builder.Append(GetRawString(line, config));
                 }
 
                 string text = builder.ToString();
@@ -198,115 +231,79 @@ namespace SA2MessageTextTool
             return combinedStrings;
         }
 
-        private static List<string> GetEmeraldHintStrings(List<List<Message>> jsonContents)
+        private static List<string> GetEmeraldHintStrings(List<List<Message>> messages, AppConfig config)
         {
             var emeraldHints = new List<string>();
 
-            foreach (var hintsPerPiece in jsonContents)
+            foreach (var hintsPerPiece in messages)
             {
                 foreach (var hint in hintsPerPiece)
                 {
-                    var builder = new StringBuilder();
-
-                    builder.Append('\x0C');
-
-                    if (hint.Is2PPiece.HasValue)
-                        builder.Append('D');
-
-                    builder.Append(' ');
-
-                    if (hint.Centered.HasValue)
-                        builder.Append((char)hint.Centered);
-
-                    builder.Append(hint.Text);
-
-                    string text = builder.ToString();
-                    emeraldHints.Add(text);
+                    emeraldHints.Add(GetRawString(hint, config));
                 }
             }
 
             return emeraldHints;
         }
 
-        private static List<string> GetSimpleStrings(List<List<Message>> jsonContents)
+        private static List<string> GetSimpleStrings(List<List<Message>> messages, AppConfig config)
         {
             var strings = new List<string>();
 
-            foreach (var group in jsonContents)
+            foreach (var group in messages)
             {
                 foreach (var line in group)
                 {
-                    var builder = new StringBuilder();
-
-                    if (line.Centered.HasValue)
-                        builder.Append((char)line.Centered);
-
-                    builder.Append(line.Text);
-
-                    string text = builder.ToString();
-                    strings.Add(text);
+                    strings.Add(GetRawString(line, config));
                 }
             }
 
             return strings;
         }
 
-
-        private static List<CStyleText> GetCStringsAndPointers(List<string> strings, AppConfig config, bool isChaoNames = false)
+        private static void WriteOffsets(ref List<byte> writeTo, List<string> messages, AppConfig config)
         {
-            var cText = new List<CStyleText>();
             int separatorLength = 4;
-            int offset = sizeof(int) * strings.Count + separatorLength;
+            int offset = messages.Count * sizeof(int) + separatorLength;
 
-            foreach (var line in strings)
+            foreach (var message in messages)
             {
-                var cString = new List<byte>();
-                string text = line;
+                byte[] offsetBytes = config.Endianness == Endianness.BigEndian ? BitConverter.GetBytes(offset).Reverse().ToArray() : BitConverter.GetBytes(offset);
+                writeTo.AddRange(offsetBytes);
+                offset += config.Encoding.GetByteCount(message) + 1;
+            }
+        }
 
-                if (config.ModifiedCodepage == true)
-                    text = text.ConvertToModifiedCodepage(TextConversionMode.Reversed);
-
-                text = text.ReplaceKeyboardButtons(TextConversionMode.Reversed);
-
+        private static void WriteStrings(ref List<byte> writeTo, List<string> messages, AppConfig config, bool isChaoNames)
+        {
+            foreach (var message in messages)
+            {
                 byte[] textBytes;
-                
+
                 if (isChaoNames)
                 {
                     ChaoTextConverter.SetCharacterTable(config);
-                    textBytes = ChaoTextConverter.ToBytes(text);
+                    textBytes = ChaoTextConverter.ToBytes(message);
                 }
                 else
                 {
-                    textBytes = config.Encoding.GetBytes(text);
+                    textBytes = config.Encoding.GetBytes(message);
                 }
 
-                cString.AddRange(textBytes);
-                cString.Add(0);
-                cText.Add(new CStyleText(cString.ToArray(), offset));
-                offset += cString.Count;
+                writeTo.AddRange(textBytes);
+                writeTo.Add(0);
             }
-
-            return cText;
         }
 
-        private static byte[] GetFileContents(List<CStyleText> cText, AppConfig config)
+        private static byte[] WriteDecompressedBinary(List<string> messages, AppConfig config, bool isChaoNames)
         {
-            var contents = new List<byte>();
+            var binary = new List<byte>();
 
-            foreach (var entry in cText)
-            {
-                byte[] offsetBytes = config.Endianness == Endianness.BigEndian ? BitConverter.GetBytes(entry.Offset).Reverse().ToArray() : BitConverter.GetBytes(entry.Offset);
-                contents.AddRange(offsetBytes);
-            }
+            WriteOffsets(ref binary, messages, config);
+            binary.AddRange(BitConverter.GetBytes(-1));
+            WriteStrings(ref binary, messages, config, isChaoNames);
 
-            contents.AddRange(BitConverter.GetBytes(-1));
-
-            foreach (var entry in cText)
-            {
-                contents.AddRange(entry.Text);
-            }
-
-            return contents.ToArray();
+            return binary.ToArray();
         }
     }
 }

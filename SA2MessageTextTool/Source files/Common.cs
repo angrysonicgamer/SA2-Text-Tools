@@ -97,16 +97,4 @@ namespace SA2MessageTextTool
             Messages = messages;
         }
     }
-
-    public class CStyleText
-    {
-        public byte[] Text { get; set; }
-        public int Offset { get; set; }
-
-        public CStyleText(byte[] text, int offset)
-        {
-            Text = text;
-            Offset = offset;
-        }
-    }
 }

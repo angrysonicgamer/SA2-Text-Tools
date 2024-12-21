@@ -44,13 +44,13 @@ namespace SA2MessageTextTool
 
             if (fileExtension == ".prs")
             {
-                var jsonContents = PrsFile.Read(sourceFile, config);
-                JsonFile.Write(jsonContents, config);
+                var extractedData = PrsFile.Read(sourceFile, config);
+                JsonFile.Write(extractedData, config);
             }
             else if (fileExtension == ".json")
             {
-                var jsonContents = JsonFile.Read(sourceFile);
-                PrsFile.Write(jsonContents, config);
+                var extractedData = JsonFile.Read(sourceFile);
+                PrsFile.Write(extractedData, config);
             }
             else
             {
