@@ -41,6 +41,12 @@ namespace SA2CutsceneTextTool
             var decompressedFile = Prs.Decompress(File.ReadAllBytes(prsFile));
             string fileName = Path.GetFileNameWithoutExtension(prsFile);
             var events = ReadEventData(decompressedFile, config);
+
+            if (config.OrderByID)
+            {
+                events = events.OrderBy(x => x.EventID).ToList();
+            }                
+
             return new EventFile(fileName, events);
         }
 

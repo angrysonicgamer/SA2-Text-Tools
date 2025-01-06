@@ -8,6 +8,7 @@ namespace SA2CutsceneTextTool
         public Endianness Endianness { get; set; }
         public Encoding Encoding { get; set; }
         public bool? ModifiedCodepage { get; set; }
+        public bool OrderByID { get; set; }
         public ExportType Export { get; set; }
         public JsonStyle? JsonStyle { get; set; }
 
@@ -21,6 +22,7 @@ namespace SA2CutsceneTextTool
             Encodings encoding = ParseEnum<Encodings>(config["Encoding"]);
             Encoding = Encoding.GetEncoding((int)encoding);
             ModifiedCodepage = config["ModifiedCodepage"] != null ? config["ModifiedCodepage"].GetValue<bool?>() : null;
+            OrderByID = config["OrderByID"].GetValue<bool>();
             Export = ParseEnum<ExportType>(config["Export"]);
             JsonStyle = Export == ExportType.JSON ? ParseEnum<JsonStyle>(config["JsonStyle"]) : null;
         }
