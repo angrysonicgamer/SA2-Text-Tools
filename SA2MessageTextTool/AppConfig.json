@@ -1,26 +1,26 @@
 {
-    "Info": {
-        "Endianness": [
-            { "Value": "LittleEndian",				"Description": "Used in Dreamcast version" },
-            { "Value": "BigEndian",					"Description": "Used in all other versions (Gamecube, PC, Xbox360, PS3)" }
-        ],
-        "Encoding": [
-            { "Value": "Windows1251",				"Description": "Standard single-byte Cyrillic encoding" },
-            { "Value": "Windows1252",				"Description": "Standard single-byte Latin encoding" },
-            { "Value": "ShiftJIS",					"Description": "Japanese encoding" },
-            { "Parameter": "ModifiedCodepage",		"Description": "Nullable boolean, only for 1251 (changed placement of letters Ё/ё because SOC are genius)" }
-        ],
+	"Info": {
+		"Endianness": [
+			{ "Value": "LittleEndian",				"Description": "Used in Dreamcast version" },
+			{ "Value": "BigEndian",					"Description": "Used in all other versions (Gamecube, PC, Xbox360, PS3)" }
+		],
+		"Encoding": [
+			{ "Value": "Windows1251",				"Description": "Standard single-byte Cyrillic encoding" },
+			{ "Value": "Windows1252",				"Description": "Standard single-byte Latin encoding" },
+			{ "Value": "ShiftJIS",					"Description": "Japanese encoding" },
+			{ "Parameter": "ModifiedCodepage",		"Description": "Nullable boolean, only for 1251 (changed placement of letters Ё/ё because SOC are genius)" }
+		],
 		"JsonStyle": [
 			{ "Value": "Indented",					"Description": "Default json style" },
-		    { "Value": "SingleLinePerEntry",		"Description": "Customized style where each message's parameters are represented by a single line" }
+			{ "Value": "SingleLinePerEntry",		"Description": "Customized style where each message's parameters are represented by a single line" }
 		]
-    },
+	},
 	
 	
-    "Config": {
-        "Endianness": "BigEndian",
-        "Encoding": "Windows1251",
+	"Config": {
+		"Endianness": "BigEndian",
+		"Encoding": "Windows1251",
 		"ModifiedCodepage": true,
 		"JsonStyle": "SingleLinePerEntry"
-    }
+	}
 }

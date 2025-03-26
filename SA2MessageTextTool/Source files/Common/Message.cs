@@ -1,34 +1,8 @@
-﻿using System.Text.Json.Serialization;
+﻿using SA2MessageTextTool.Extensions;
+using System.Text.Json.Serialization;
 
-namespace SA2MessageTextTool
+namespace SA2MessageTextTool.Common
 {
-    public enum Endianness
-    {
-        BigEndian,
-        LittleEndian
-    }
-
-    public enum Encodings
-    {
-        Windows1251 = 1251,
-        Windows1252 = 1252,
-        ShiftJIS = 932
-    }
-
-    public enum JsonStyle
-    {
-        Indented,
-        SingleLinePerEntry
-    }
-
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum CenteringMethod : short
-    {
-        NotCentered,        // ignored as null
-        Block = 7,          // \a
-        EachLine = 9        // \t
-    }
-
     public class Message
     {
         public int? Voice { get; set; }
@@ -46,9 +20,9 @@ namespace SA2MessageTextTool
         public void Parse(string rawText, AppConfig config)
         {
             rawText = rawText.ReplaceKeyboardButtons();
-            
-            if (config.ModifiedCodepage == true)
-                rawText = rawText.ConvertToModifiedCodepage();
+
+            if (config.UseModifiedCyrillicCP)
+                rawText = rawText.ModifyCyrillicCP();
 
             if (rawText.StartsWith('\x0C'))
             {
@@ -59,15 +33,16 @@ namespace SA2MessageTextTool
                 string? frameCount = controls.IndexOf('w') != -1 ? controls.Substring(controls.IndexOf('w') + 1) : null;
                 Duration = frameCount != null ? int.Parse(frameCount) : null;
                 rawText = rawText.Substring(rawText.IndexOf(' ') + 1);
-            }            
-            
+            }
+
             Centered = GetCenteringMethod(rawText);
             Text = Centered.HasValue ? rawText.Substring(1) : rawText;
         }
 
         public void ReadChaoName(BinaryReader reader)
         {
-            Text = reader.ReadChaoName();
+            var bytes = reader.ReadBytesUntilNullTerminator();
+            Text = ChaoTextConverter.ToString(bytes);
         }
 
 
@@ -80,21 +55,6 @@ namespace SA2MessageTextTool
                 return CenteringMethod.EachLine;
 
             return null;
-        }
-    }
-
-    public class MessageFile
-    {
-        public string Name { get; set; }
-        public List<List<Message>> Messages { get; set; }
-
-        [JsonConstructor]
-        public MessageFile() { }
-
-        public MessageFile(string name, List<List<Message>> messages)
-        {
-            Name = name;
-            Messages = messages;
         }
     }
 }

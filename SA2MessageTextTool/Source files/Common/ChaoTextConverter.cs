@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace SA2MessageTextTool
+namespace SA2MessageTextTool.Common
 {
     public static class ChaoTextConverter
     {

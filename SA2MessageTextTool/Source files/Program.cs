@@ -1,4 +1,7 @@
 ﻿using System.Text;
+using SA2MessageTextTool.PRS;
+using SA2MessageTextTool.JSON;
+using SA2MessageTextTool.Common;
 
 namespace SA2MessageTextTool
 {

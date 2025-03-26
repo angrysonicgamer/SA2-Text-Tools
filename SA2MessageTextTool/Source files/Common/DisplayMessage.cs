@@ -1,4 +1,6 @@
-﻿namespace SA2MessageTextTool
+﻿using System.Text;
+
+namespace SA2MessageTextTool.Common
 {
     public static class DisplayMessage
     {
@@ -66,8 +68,9 @@
 
         public static void Config(AppConfig config)
         {
-            string modifiedCodepage = config.ModifiedCodepage == true ? "(modified)" : "";
-            
+            bool isModifiedCyrillic = config.ModifiedCodepage == true && config.Encoding == Encoding.GetEncoding((int)Encodings.Windows1251);
+            string modifiedCodepage = isModifiedCyrillic ? "(modified)" : "";
+
             Console.WriteLine($"Config settings:\n" +
                 $"Endianness - {config.Endianness}\n" +
                 $"Encoding - {config.Encoding.EncodingName} {modifiedCodepage}\n" +
