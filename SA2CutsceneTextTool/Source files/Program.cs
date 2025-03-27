@@ -1,4 +1,8 @@
 ﻿using System.Text;
+using SA2CutsceneTextTool.PRS;
+using SA2CutsceneTextTool.CSV;
+using SA2CutsceneTextTool.JSON;
+using SA2CutsceneTextTool.Common;
 
 namespace SA2CutsceneTextTool
 {

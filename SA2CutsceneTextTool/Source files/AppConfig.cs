@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using SA2CutsceneTextTool.Common;
 
 namespace SA2CutsceneTextTool
 {
@@ -11,6 +13,9 @@ namespace SA2CutsceneTextTool
         public bool OrderByID { get; set; }
         public ExportType Export { get; set; }
         public JsonStyle? JsonStyle { get; set; }
+
+        [JsonIgnore]
+        public bool UseModifiedCyrillicCP { get; set; }
 
 
         public void Read()
@@ -25,6 +30,8 @@ namespace SA2CutsceneTextTool
             OrderByID = config["OrderByID"].GetValue<bool>();
             Export = ParseEnum<ExportType>(config["Export"]);
             JsonStyle = Export == ExportType.JSON ? ParseEnum<JsonStyle>(config["JsonStyle"]) : null;
+
+            UseModifiedCyrillicCP = ModifiedCodepage == true && Encoding == Encoding.GetEncoding((int)Encodings.Windows1251);
         }
 
 

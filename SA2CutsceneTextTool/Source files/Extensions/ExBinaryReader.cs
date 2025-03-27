@@ -1,40 +1,10 @@
 ﻿using System.Text;
+using SA2CutsceneTextTool.Common;
 
-namespace SA2CutsceneTextTool
+namespace SA2CutsceneTextTool.Extensions
 {
-    public enum TextConversionMode
+    public static class ExBinaryReader
     {
-        Default,
-        Reversed,
-    }
-    
-    public static class Extensions
-    {
-        private static readonly Dictionary<char, char> lettersToConvert = new Dictionary<char, char>()
-        {
-            { '№', 'Ё' },
-            { 'є', 'ё' },
-        };
-
-                
-        // string
-
-        public static string ConvertToModifiedCodepage(this string text, TextConversionMode mode = TextConversionMode.Default)
-        {
-            foreach (var pair in lettersToConvert)
-            {
-                if (mode == TextConversionMode.Default)
-                    text = text.Replace(pair.Key, pair.Value);
-                else
-                    text = text.Replace(pair.Value, pair.Key);
-            }
-
-            return text;
-        }
-
-
-        // BinaryReader
-
         public static void SetPosition(this BinaryReader reader, long position)
         {
             reader.BaseStream.Position = position;
@@ -68,7 +38,7 @@ namespace SA2CutsceneTextTool
             if (endianness == Endianness.LittleEndian)
             {
                 return reader.ReadInt32();
-            }                
+            }
             else
             {
                 byte[] data = reader.ReadBytes(4);

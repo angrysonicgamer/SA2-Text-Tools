@@ -1,27 +1,9 @@
 ﻿using CsvHelper;
 using System.Globalization;
+using SA2CutsceneTextTool.Common;
 
-namespace SA2CutsceneTextTool
+namespace SA2CutsceneTextTool.CSV
 {
-    public class CsvMessage
-    {
-        public string EventID { get; set; }
-        public string Character { get; set; }
-        public string Centered { get; set; }
-        public string Text { get; set; }
-
-        public CsvMessage() { }
-
-        public CsvMessage(string id, string character, string centered, string text)
-        {
-            EventID = id;
-            Character = character;
-            Centered = centered;
-            Text = text;
-        }
-    }
-
-
     public static class CsvFile
     {
         public static EventFile Read(string csvFile)
@@ -86,14 +68,15 @@ namespace SA2CutsceneTextTool
         {
             var csvData = new List<List<CsvMessage>>();
 
-            foreach (var scene in eventData.OrderBy(x => x.EventID))
+            foreach (var scene in eventData)
             {
                 var messageData = new List<CsvMessage>();
 
                 foreach (var message in scene.Messages)
                 {
-                    string centered = message.Centered.HasValue ? message.Centered.ToString() : "";
-                    messageData.Add(new CsvMessage(scene.EventID.ToString(), message.Character.ToString(), centered, message.Text));
+                    var csvMessage = new CsvMessage();
+                    csvMessage.GetCsvMessage(message, scene);
+                    messageData.Add(csvMessage);
                 }
 
                 csvData.Add(messageData);

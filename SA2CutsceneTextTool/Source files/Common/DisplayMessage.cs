@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using SA2CutsceneTextTool.Common;
 
 namespace SA2CutsceneTextTool
 {
