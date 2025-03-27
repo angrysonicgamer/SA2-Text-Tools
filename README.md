@@ -9,7 +9,9 @@ It will be saved in the "New files" subfolder.
 
 ## CMD usage
 `SA2CutsceneTextTool filename`
+
 `SA2MessageTextTool filename`
+
 `SA2SubtitlesTimingTool filename`
 
 The tools support Windows-1251, Windows-1252 and Shift-JIS encodings and both little endian and big endian byte orders.
