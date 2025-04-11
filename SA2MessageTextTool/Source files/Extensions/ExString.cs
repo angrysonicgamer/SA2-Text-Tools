@@ -1,4 +1,6 @@
-﻿namespace SA2MessageTextTool.Extensions
+﻿using SA2MessageTextTool.Common;
+
+namespace SA2MessageTextTool.Extensions
 {
     public static class ExString
     {

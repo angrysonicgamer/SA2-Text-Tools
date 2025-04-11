@@ -1,8 +1,8 @@
-﻿using System.Text.Encodings.Web;
+﻿using SA2MessageTextTool.Common;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using SA2MessageTextTool.Common;
 
 namespace SA2MessageTextTool.JSON
 {
@@ -49,29 +49,33 @@ namespace SA2MessageTextTool.JSON
 
         private static string WriteCustomFormat(MessageFile jsonContents)
         {
-            var json = new List<string>() { $"{{\n\t\"Name\": \"{jsonContents.Name}\",\n\t\"Messages\": [" };
+            const string objStart = "{";
+            const string objEnd = "}";
+            const string arrayStart = "[";
+            const string arrayEnd = "]";
+            
+            var json = new CustomJson();
+            json.AddString(objStart);
+            json.AddString($"\"Name\": \"{jsonContents.Name}\",", JsonIndentationLevel.One);
+            json.AddString($"\"Messages\": {arrayStart}", JsonIndentationLevel.One);
 
             foreach (var linesList in jsonContents.Messages)
             {
-                json.Add("\t\t[");
+                json.AddString(arrayStart, JsonIndentationLevel.Two);
+
                 foreach (var line in linesList)
                 {
-                    string text = $"\"Text\": \"{line.Text.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
-                    string voice = line.Voice.HasValue ? $", \"Voice\": {line.Voice}" : "";
-                    string duration = line.Duration.HasValue ? $", \"Duration\": {line.Duration}" : "";
-                    string centered = line.Centered.HasValue ? $", \"Centered\": \"{line.Centered}\"" : "";
-                    string is2p = line.Is2PPiece.HasValue ? $", \"2P Piece\": {line.Is2PPiece.ToString().ToLower()}" : "";
-
-                    string msg = $"\t\t\t{{ {text}{voice}{duration}{centered}{is2p} }},";
-                    json.Add(msg);
+                    json.AddString($"{line},", JsonIndentationLevel.Three);
                 }
-                json[json.Count - 1] = json[json.Count - 1].TrimEnd(',');
-                json.Add("\t\t],");
+
+                json.RemoveTrailingComma();
+                json.AddString($"{arrayEnd},", JsonIndentationLevel.Two);
             }
 
-            json[json.Count - 1] = json[json.Count - 1].TrimEnd(',');
-            json.Add("\t]\n}");
-            return string.Join('\n', json);
-        }
+            json.RemoveTrailingComma();
+            json.AddString(arrayEnd, JsonIndentationLevel.One);
+            json.AddString(objEnd);
+            return json.Serialize();
+        }        
     }
 }

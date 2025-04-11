@@ -1,5 +1,5 @@
-﻿using SA2MessageTextTool.Extensions;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using SA2MessageTextTool.Extensions;
 
 namespace SA2MessageTextTool.Common
 {
@@ -43,6 +43,17 @@ namespace SA2MessageTextTool.Common
         {
             var bytes = reader.ReadBytesUntilNullTerminator();
             Text = ChaoTextConverter.ToString(bytes);
+        }
+
+        public override string ToString()
+        {
+            string text = $"\"Text\": \"{Text.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
+            string voice = Voice.HasValue ? $", \"Voice\": {Voice}" : "";
+            string duration = Duration.HasValue ? $", \"Duration\": {Duration}" : "";
+            string centered = Centered.HasValue ? $", \"Centered\": \"{Centered}\"" : "";
+            string is2p = Is2PPiece.HasValue ? $", \"2P Piece\": {Is2PPiece.ToString().ToLower()}" : "";
+
+            return $"{{ {text}{voice}{duration}{centered}{is2p} }}";
         }
 
 
