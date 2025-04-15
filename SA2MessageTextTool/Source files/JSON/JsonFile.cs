@@ -22,11 +22,11 @@ namespace SA2MessageTextTool.JSON
 
             if (config.JsonStyle == JsonStyle.Indented)
             {
-                json = WriteIndented(msgFile);
+                json = GetIndentedJson(msgFile);
             }
             else
             {
-                json = WriteCustomFormat(msgFile);
+                json = GetCustomJson(msgFile);
             }
 
             File.WriteAllText(jsonFile, json);
@@ -35,7 +35,7 @@ namespace SA2MessageTextTool.JSON
         }
 
 
-        private static string WriteIndented(MessageFile jsonContents)
+        private static string GetIndentedJson(MessageFile jsonContents)
         {
             var options = new JsonSerializerOptions()
             {
@@ -47,7 +47,7 @@ namespace SA2MessageTextTool.JSON
             return JsonSerializer.Serialize(jsonContents, options);
         }
 
-        private static string WriteCustomFormat(MessageFile jsonContents)
+        private static string GetCustomJson(MessageFile jsonContents)
         {
             const string objStart = "{";
             const string objEnd = "}";
