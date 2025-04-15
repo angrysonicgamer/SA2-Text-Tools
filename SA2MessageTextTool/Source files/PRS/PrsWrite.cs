@@ -149,13 +149,12 @@ namespace SA2MessageTextTool.PRS
                 {
                     ChaoTextConverter.SetCharacterTable(config);
                     writer.Write(ChaoTextConverter.ToBytes(message));
+                    writer.Write((byte)0);
                 }
                 else
                 {
-                    writer.Write(config.Encoding.GetBytes(message));
+                    writer.WriteCString(message, config.Encoding);
                 }
-
-                writer.Write((byte)0);
             }
         }
 
