@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using SA2CutsceneTextTool.Common;
+using SA2CutsceneTextTool.Extensions;
 
 namespace SA2CutsceneTextTool.PRS
 {
@@ -10,25 +11,16 @@ namespace SA2CutsceneTextTool.PRS
         public string RawText => text;
         public static uint Size => 8;
 
-        public void WriteMessageData(ref List<byte> writeTo, Endianness endianness)
+
+        public void WriteData(BinaryWriter writer, AppConfig config)
         {
-            byte[] character = BitConverter.GetBytes(Character);
-            byte[] textPtr = BitConverter.GetBytes(TextPointer);
-
-            if (endianness == Endianness.BigEndian)
-            {
-                character = character.Reverse().ToArray();
-                textPtr = textPtr.Reverse().ToArray();
-            }
-
-            writeTo.AddRange(character);
-            writeTo.AddRange(textPtr);
+            writer.WriteUInt32((uint)Character, config.Endianness);
+            writer.WriteUInt32(TextPointer, config.Endianness);            
         }
 
-        public void WriteText(ref List<byte> writeTo, Encoding encoding)
+        public void WriteText(BinaryWriter writer, AppConfig config)
         {
-            writeTo.AddRange(encoding.GetBytes(RawText));
-            writeTo.Add(0);
+            writer.WriteCString(RawText, config.Encoding);
         }
     }
 }

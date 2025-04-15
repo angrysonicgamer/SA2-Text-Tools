@@ -78,27 +78,28 @@ namespace SA2CutsceneTextTool.PRS
 
         private static byte[] WriteDecompressedBinary(List<EventInfo> eventInfoList, List<PrsMessage> messageData, AppConfig config)
         {
-            var binary = new List<byte>();
+            var memory = new MemoryStream();
+            var writer = new BinaryWriter(memory);
 
             foreach (var scene in eventInfoList)
             {
-                scene.Write(ref binary, config.Endianness);
+                scene.Write(writer, config.Endianness);
             }
 
-            binary.AddRange([0xFF, 0xFF, 0xFF, 0xFF]);
-            binary.AddRange(new byte[8]);
+            EventInfo.Null.Write(writer, config.Endianness);
 
             foreach (var message in messageData)
             {
-                message.WriteMessageData(ref binary, config.Endianness);
+                message.WriteData(writer, config);
             }
 
             foreach (var message in messageData)
             {
-                message.WriteText(ref binary, config.Encoding);
+                message.WriteText(writer, config);
             }
 
-            return binary.ToArray();
+            writer.Dispose();
+            return memory.GetBuffer();
         }
     }
 }

@@ -8,6 +8,7 @@ namespace SA2CutsceneTextTool.Common
         public uint MessagePointer { get; set; }
         public int TotalMessages { get; set; }
         public static uint Size => 12;
+        public static EventInfo Null => new EventInfo(-1, 0, 0);
 
         public EventInfo() { }
 
@@ -28,22 +29,11 @@ namespace SA2CutsceneTextTool.Common
             TotalMessages = reader.ReadInt32(endianness);
         }
 
-        public void Write(ref List<byte> writeTo, Endianness endianness)
+        public void Write(BinaryWriter writer, Endianness endianness)
         {
-            byte[] eventID = BitConverter.GetBytes(EventID);
-            byte[] messagePtr = BitConverter.GetBytes(MessagePointer);
-            byte[] totalLines = BitConverter.GetBytes(TotalMessages);
-
-            if (endianness == Endianness.BigEndian)
-            {
-                eventID = eventID.Reverse().ToArray();
-                messagePtr = messagePtr.Reverse().ToArray();
-                totalLines = totalLines.Reverse().ToArray();
-            }
-
-            writeTo.AddRange(eventID);
-            writeTo.AddRange(messagePtr);
-            writeTo.AddRange(totalLines);
+            writer.WriteUInt32((uint)EventID, endianness);
+            writer.WriteUInt32(MessagePointer, endianness);
+            writer.WriteUInt32((uint)TotalMessages, endianness);
         }
 
         public bool IsValid()
