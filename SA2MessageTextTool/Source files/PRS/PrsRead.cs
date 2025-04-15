@@ -19,18 +19,22 @@ namespace SA2MessageTextTool.PRS
             if (fileName.StartsWith("eh", StringComparison.OrdinalIgnoreCase))
             {
                 messages = ReadEmeraldHints(reader, offsets, config);
+                DisplayMessage.AssumedFileType("Emerald hints");
             }                
             else if (fileName.StartsWith("mh", StringComparison.OrdinalIgnoreCase))
             {
                 messages = ReadGameplayMessages(reader, offsets, config);
+                DisplayMessage.AssumedFileType("Omochao hints / gameplay messages");
             }
             else if (fileName.StartsWith("msgalkinderfoname", StringComparison.OrdinalIgnoreCase))
             {
                 messages = ReadChaoNames(reader, offsets, config);
+                DisplayMessage.AssumedFileType("Chao names");
             }                
             else
             {
                 messages = ReadSimpleText(reader, offsets, config);
+                DisplayMessage.AssumedFileType("Misc. (simple text)");
             }
 
             reader.Dispose();

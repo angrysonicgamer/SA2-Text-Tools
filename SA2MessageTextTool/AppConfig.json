@@ -12,7 +12,7 @@
 		],
 		"JsonStyle": [
 			{ "Value": "Indented",					"Description": "Default json style" },
-			{ "Value": "SingleLinePerEntry",		"Description": "Customized style where each message's parameters are represented by a single line" }
+			{ "Value": "Custom",					"Description": "Customized style where each message's parameters are represented by a single line" }
 		]
 	},
 	
@@ -21,6 +21,6 @@
 		"Endianness": "BigEndian",
 		"Encoding": "Windows1251",
 		"ModifiedCodepage": true,
-		"JsonStyle": "SingleLinePerEntry"
+		"JsonStyle": "Custom"
 	}
 }

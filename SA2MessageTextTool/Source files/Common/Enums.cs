@@ -18,7 +18,7 @@ namespace SA2MessageTextTool.Common
     public enum JsonStyle
     {
         Indented,
-        SingleLinePerEntry
+        Custom
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]

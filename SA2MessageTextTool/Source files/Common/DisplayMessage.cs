@@ -63,7 +63,12 @@ namespace SA2MessageTextTool.Common
 
         public static void ReadingFile(string file)
         {
-            Console.WriteLine($"Reading file: {Path.GetFileName(file)}...\n");
+            Console.WriteLine($"Reading file: {Path.GetFileName(file)}...");
+        }
+
+        public static void AssumedFileType(string type)
+        {
+            Console.WriteLine($"Assumed file type - {type}");
         }
 
         public static void Config(AppConfig config)
@@ -71,7 +76,7 @@ namespace SA2MessageTextTool.Common
             bool isModifiedCyrillic = config.ModifiedCodepage == true && config.Encoding == Encoding.GetEncoding((int)Encodings.Windows1251);
             string modifiedCodepage = isModifiedCyrillic ? "(modified)" : "";
 
-            Console.WriteLine($"Config settings:\n" +
+            Console.WriteLine($"\nConfig settings:\n" +
                 $"Endianness - {config.Endianness}\n" +
                 $"Encoding - {config.Encoding.EncodingName} {modifiedCodepage}\n" +
                 $"JSON Style - {config.JsonStyle}\n");

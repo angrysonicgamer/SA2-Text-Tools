@@ -15,18 +15,18 @@ namespace SA2MessageTextTool.JSON
             return JsonSerializer.Deserialize<MessageFile>(json);
         } 
 
-        public static void Write(MessageFile jsonContents, AppConfig config)
+        public static void Write(MessageFile msgFile, AppConfig config)
         {
-            string jsonFile = $"{jsonContents.Name}.json";
+            string jsonFile = $"{msgFile.Name}.json";
             string json;
 
             if (config.JsonStyle == JsonStyle.Indented)
             {
-                json = WriteIndented(jsonContents);
+                json = WriteIndented(msgFile);
             }
             else
             {
-                json = WriteCustomFormat(jsonContents);
+                json = WriteCustomFormat(msgFile);
             }
 
             File.WriteAllText(jsonFile, json);

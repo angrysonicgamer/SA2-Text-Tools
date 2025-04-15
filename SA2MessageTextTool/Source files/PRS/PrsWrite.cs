@@ -10,7 +10,7 @@ namespace SA2MessageTextTool.PRS
         public static void Write(MessageFile data, AppConfig config)
         {
             string fileName = data.Name;
-            List<string> strings;
+            List<string> strings;            
 
             if (fileName.StartsWith("eh", StringComparison.OrdinalIgnoreCase))
             {
@@ -129,49 +129,47 @@ namespace SA2MessageTextTool.PRS
             return strings;
         }
 
-        private static void WriteOffsets(ref List<byte> writeTo, List<string> messages, AppConfig config)
+        private static void WriteOffsets(BinaryWriter writer, List<string> messages, AppConfig config)
         {
             int separatorLength = 4;
             int offset = messages.Count * sizeof(int) + separatorLength;
 
             foreach (var message in messages)
             {
-                byte[] offsetBytes = config.Endianness == Endianness.BigEndian ? BitConverter.GetBytes(offset).Reverse().ToArray() : BitConverter.GetBytes(offset);
-                writeTo.AddRange(offsetBytes);
+                writer.WriteInt32(offset, config.Endianness);
                 offset += config.Encoding.GetByteCount(message) + 1;
             }
         }
 
-        private static void WriteStrings(ref List<byte> writeTo, List<string> messages, AppConfig config, bool isChaoNames)
+        private static void WriteStrings(BinaryWriter writer, List<string> messages, AppConfig config, bool isChaoNamesFile)
         {
             foreach (var message in messages)
             {
-                byte[] textBytes;
-
-                if (isChaoNames)
+                if (isChaoNamesFile)
                 {
                     ChaoTextConverter.SetCharacterTable(config);
-                    textBytes = ChaoTextConverter.ToBytes(message);
+                    writer.Write(ChaoTextConverter.ToBytes(message));
                 }
                 else
                 {
-                    textBytes = config.Encoding.GetBytes(message);
+                    writer.Write(config.Encoding.GetBytes(message));
                 }
 
-                writeTo.AddRange(textBytes);
-                writeTo.Add(0);
+                writer.Write((byte)0);
             }
         }
 
         private static byte[] WriteDecompressedBinary(List<string> messages, AppConfig config, bool isChaoNamesFile)
         {
-            var binary = new List<byte>();
+            var memory = new MemoryStream();
+            var writer = new BinaryWriter(memory);
 
-            WriteOffsets(ref binary, messages, config);
-            binary.AddRange(BitConverter.GetBytes(-1));
-            WriteStrings(ref binary, messages, config, isChaoNamesFile);
+            WriteOffsets(writer, messages, config);
+            writer.Write(BitConverter.GetBytes(-1)); // separator
+            WriteStrings(writer, messages, config, isChaoNamesFile);
 
-            return binary.ToArray();
+            writer.Dispose();
+            return memory.GetBuffer();
         }
     }
 }
