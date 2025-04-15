@@ -24,7 +24,7 @@ namespace SA2CutsceneTextTool.Common
     public enum JsonStyle
     {
         Indented,
-        SingleLinePerEntry
+        Custom
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -33,5 +33,19 @@ namespace SA2CutsceneTextTool.Common
         NotCentered,        // ignored as null
         Block = 7,          // \a
         EachLine = 9        // \t
+    }
+
+    public enum TextConversionMode
+    {
+        Default,
+        Reversed,
+    }
+
+    public enum JsonIndentationLevel
+    {
+        One = 1,
+        Two,
+        Three,
+        Four
     }
 }

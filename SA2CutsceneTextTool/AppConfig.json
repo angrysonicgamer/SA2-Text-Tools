@@ -17,8 +17,8 @@
 			"Values": [ "JSON", "CSV" ]
 		},
 		"JsonStyle": [
-			{ "Value": "Indented",					"Description": "Default json style" },
-			{ "Value": "SingleLinePerEntry",		"Description": "Customized style where each message's parameters are represented by a single line" }
+			{ "Value": "Indented",				"Description": "Default json style" },
+			{ "Value": "Custom",				"Description": "Customized style where each message's parameters are represented by a single line" }
 		]
 	},
 	
@@ -29,6 +29,6 @@
 		"ModifiedCodepage": true,
 		"OrderByID": true,
 		"Export": "JSON",
-		"JsonStyle": "Indented"
+		"JsonStyle": "Custom"
 	}
 }

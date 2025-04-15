@@ -1,4 +1,6 @@
-﻿namespace SA2CutsceneTextTool.Extensions
+﻿using SA2CutsceneTextTool.Common;
+
+namespace SA2CutsceneTextTool.Extensions
 {
     public static class ExString
     {

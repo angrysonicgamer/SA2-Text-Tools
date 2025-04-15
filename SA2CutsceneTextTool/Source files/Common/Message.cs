@@ -32,6 +32,15 @@ namespace SA2CutsceneTextTool.Common
             Text = Centered.HasValue ? text.Substring(1) : text;
         }
 
+        public override string ToString()
+        {
+            string character = $"\"Character\": {Character}";
+            string centered = Centered.HasValue ? $", \"Centered\": \"{Centered}\"" : "";
+            string text = $", \"Text\": \"{Text.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
+
+            return $"{{ {character}{centered}{text} }}";
+        }
+
 
         private static CenteringMethod? GetCenteringMethod(string text)
         {

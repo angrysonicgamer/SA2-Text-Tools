@@ -1,8 +1,8 @@
-﻿using System.Text.Encodings.Web;
+﻿using SA2CutsceneTextTool.Common;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using SA2CutsceneTextTool.Common;
 
 namespace SA2CutsceneTextTool.JSON
 {
@@ -19,16 +19,15 @@ namespace SA2CutsceneTextTool.JSON
         public static void Write(EventFile data, AppConfig config)
         {
             string jsonFile = $"{data.Name}.json";
-
             string json;
 
             if (config.JsonStyle == JsonStyle.Indented)
             {
-                json = WriteIndented(data);
+                json = GetIndentedJson(data);
             }
             else
             {
-                json = WriteCustomFormat(data);
+                json = GetCustomJson(data);
             }
 
             File.WriteAllText(jsonFile, json);
@@ -37,7 +36,7 @@ namespace SA2CutsceneTextTool.JSON
         }
 
 
-        private static string WriteIndented(EventFile data)
+        private static string GetIndentedJson(EventFile data)
         {
             var options = new JsonSerializerOptions()
             {
@@ -49,30 +48,38 @@ namespace SA2CutsceneTextTool.JSON
             return JsonSerializer.Serialize(data, options);
         }
 
-        private static string WriteCustomFormat(EventFile data)
+        private static string GetCustomJson(EventFile data)
         {
-            var json = new List<string>() { $"{{\n\t\"Name\": \"{data.Name}\",\n\t\"Events\": [" };
+            const string objStart = "{";
+            const string objEnd = "}";
+            const string arrayStart = "[";
+            const string arrayEnd = "]";
+
+            var json = new CustomJson();
+            json.AddString(objStart);
+            json.AddString($"\"Name\": \"{data.Name}\",", JsonIndentationLevel.One);
+            json.AddString($"\"Events\": {arrayStart}", JsonIndentationLevel.One);
 
             foreach (var scene in data.Events)
             {
-                json.Add($"\t\t{{\n\t\t\t\"EventID\": {scene.EventID},\n\t\t\t\"Messages\": [");
+                json.AddString(objStart, JsonIndentationLevel.Two);
+                json.AddString($"\"EventID\": {scene.EventID},", JsonIndentationLevel.Three);
+                json.AddString($"\"Messages\": {arrayStart}", JsonIndentationLevel.Three);
 
                 foreach (var message in scene.Messages)
                 {
-                    string character = $"\"Character\": {message.Character}";
-                    string centered = message.Centered.HasValue ? $", \"Centered\": \"{message.Centered}\"" : "";
-                    string text = $", \"Text\": \"{message.Text.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
-
-                    json.Add($"\t\t\t\t{{ {character}{centered}{text} }},");
+                    json.AddString($"{message},", JsonIndentationLevel.Four);
                 }
 
-                json[json.Count - 1] = json[json.Count - 1].TrimEnd(',');
-                json.Add("\t\t\t]\n\t\t},");
+                json.RemoveTrailingComma();
+                json.AddString(arrayEnd, JsonIndentationLevel.Three);
+                json.AddString($"{objEnd},", JsonIndentationLevel.Two);
             }
 
-            json[json.Count - 1] = json[json.Count - 1].TrimEnd(',');
-            json.Add("\t]\n}");
-            return string.Join('\n', json);
+            json.RemoveTrailingComma();
+            json.AddString(arrayEnd, JsonIndentationLevel.One);
+            json.AddString(objEnd);
+            return json.Serialize();
         }
     }
 }
