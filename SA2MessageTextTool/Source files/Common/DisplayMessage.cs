@@ -73,12 +73,9 @@ namespace SA2MessageTextTool.Common
 
         public static void Config(AppConfig config)
         {
-            bool isModifiedCyrillic = config.ModifiedCodepage == true && config.Encoding == Encoding.GetEncoding((int)Encodings.Windows1251);
-            string modifiedCodepage = isModifiedCyrillic ? "(modified)" : "";
-
             Console.WriteLine($"\nConfig settings:\n" +
                 $"Endianness - {config.Endianness}\n" +
-                $"Encoding - {config.Encoding.EncodingName} {modifiedCodepage}\n" +
+                $"Encoding - {config.Encoding.EncodingName}\n" +
                 $"JSON Style - {config.JsonStyle}\n");
         }
 

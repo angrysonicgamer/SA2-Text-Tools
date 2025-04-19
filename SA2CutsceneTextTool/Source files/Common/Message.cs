@@ -24,10 +24,6 @@ namespace SA2CutsceneTextTool.Common
             Character = reader.ReadInt32(config.Endianness);
             uint textOffset = reader.ReadUInt32(config.Endianness) - Pointer.BaseAddress;
             string text = reader.ReadAt(textOffset, x => x.ReadCString(config.Encoding));
-
-            if (config.UseModifiedCyrillicCP)
-                text = text.ModifyCyrillicCP();
-
             Centered = GetCenteringMethod(text);
             Text = Centered.HasValue ? text.Substring(1) : text;
         }

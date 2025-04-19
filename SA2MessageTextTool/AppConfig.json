@@ -5,10 +5,9 @@
 			{ "Value": "BigEndian",					"Description": "Used in all other versions (Gamecube, PC, Xbox360, PS3)" }
 		],
 		"Encoding": [
-			{ "Value": "Windows1251",				"Description": "Standard single-byte Cyrillic encoding" },
+			{ "Value": "Windows1251",				"Description": "Standard single-byte Cyrillic encoding. The {Y} keyboard button will be moved from 0xA8 (which is letter Ё) to 0xB7." },
 			{ "Value": "Windows1252",				"Description": "Standard single-byte Latin encoding" },
-			{ "Value": "ShiftJIS",					"Description": "Japanese encoding" },
-			{ "Parameter": "ModifiedCodepage",		"Description": "Nullable boolean, only for 1251 (changed placement of letters Ё/ё because SOC are genius)" }
+			{ "Value": "ShiftJIS",					"Description": "Japanese encoding" }
 		],
 		"JsonStyle": [
 			{ "Value": "Indented",					"Description": "Default json style" },
@@ -20,7 +19,6 @@
 	"Config": {
 		"Endianness": "BigEndian",
 		"Encoding": "Windows1251",
-		"ModifiedCodepage": true,
 		"JsonStyle": "Custom"
 	}
 }

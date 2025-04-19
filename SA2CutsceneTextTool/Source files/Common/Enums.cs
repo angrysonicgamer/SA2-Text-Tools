@@ -35,12 +35,6 @@ namespace SA2CutsceneTextTool.Common
         EachLine = 9        // \t
     }
 
-    public enum TextConversionMode
-    {
-        Default,
-        Reversed,
-    }
-
     public enum JsonIndentationLevel
     {
         One = 1,

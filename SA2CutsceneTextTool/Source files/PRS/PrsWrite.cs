@@ -1,6 +1,5 @@
 ﻿using csharp_prs;
 using SA2CutsceneTextTool.Common;
-using SA2CutsceneTextTool.Extensions;
 
 namespace SA2CutsceneTextTool.PRS
 {
@@ -44,10 +43,7 @@ namespace SA2CutsceneTextTool.PRS
 
         private static string GetRawString(Message message, AppConfig config)
         {
-            string rawText = config.UseModifiedCyrillicCP ? message.Text.ModifyCyrillicCP(TextConversionMode.Reversed) : message.Text;
-            rawText = message.Centered.HasValue ? $"{(char)message.Centered}{rawText}" : rawText;
-
-            return rawText;
+            return message.Centered.HasValue ? $"{(char)message.Centered}{message.Text}" : message.Text;
         }
 
         private static List<PrsMessage> GenerateMessageData(List<Scene> eventData, AppConfig config)

@@ -72,10 +72,7 @@ namespace SA2MessageTextTool.PRS
             builder.Append(message.Text);
             string text = builder.ToString();
 
-            if (config.UseModifiedCyrillicCP)
-                text = text.ModifyCyrillicCP(TextConversionMode.Reversed);
-
-            text = text.ReplaceKeyboardButtons(TextConversionMode.Reversed);
+            text = text.ReplaceKeyboardButtons(config.Encoding, TextConversionMode.Reversed);
             return text;
         }
 

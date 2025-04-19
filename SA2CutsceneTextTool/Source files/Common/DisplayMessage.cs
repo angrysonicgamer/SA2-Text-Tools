@@ -56,13 +56,11 @@ namespace SA2CutsceneTextTool
         }
         public static void Config(AppConfig config)
         {
-            bool isModifiedCyrillic = config.ModifiedCodepage == true && config.Encoding == Encoding.GetEncoding((int)Encodings.Windows1251);
-            string modifiedCodepage = isModifiedCyrillic ? "(modified)" : "";
             string jsonStyle = config.JsonStyle.HasValue ? $"JSON Style - {config.JsonStyle}\n" : "";
 
             Console.WriteLine($"Config settings:\n" +
                 $"Endianness - {config.Endianness}\n" +
-                $"Encoding - {config.Encoding.EncodingName} {modifiedCodepage}\n" +
+                $"Encoding - {config.Encoding.EncodingName}\n" +
                 $"Order by event ID - {config.OrderByID}\n" +
                 $"Export - {config.Export}\n" +
                 jsonStyle);

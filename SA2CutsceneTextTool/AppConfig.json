@@ -7,8 +7,7 @@
 		"Encoding": [
 			{ "Value": "Windows1251",			"Description": "Standard single-byte Cyrillic encoding" },
 			{ "Value": "Windows1252",			"Description": "Standard single-byte Latin encoding" },
-			{ "Value": "ShiftJIS",				"Description": "Japanese encoding" },
-			{ "Parameter": "ModifiedCodepage",	"Description": "Nullable boolean, only for 1251 (changed placement of letters Ё/ё because SOC are genius)" }
+			{ "Value": "ShiftJIS",				"Description": "Japanese encoding" }
 		],
 		"OrderByID": {
 			"Description": "Get sorted list of events if true. Use vanilla game order if false."
@@ -26,7 +25,6 @@
 	"Config": {
 		"Endianness": "BigEndian",
 		"Encoding": "Windows1251",
-		"ModifiedCodepage": true,
 		"OrderByID": true,
 		"Export": "JSON",
 		"JsonStyle": "Custom"

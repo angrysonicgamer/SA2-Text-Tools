@@ -19,10 +19,7 @@ namespace SA2MessageTextTool.Common
 
         public void Parse(string rawText, AppConfig config)
         {
-            rawText = rawText.ReplaceKeyboardButtons();
-
-            if (config.UseModifiedCyrillicCP)
-                rawText = rawText.ModifyCyrillicCP();
+            rawText = rawText.ReplaceKeyboardButtons(config.Encoding);
 
             if (rawText.StartsWith('\x0C'))
             {

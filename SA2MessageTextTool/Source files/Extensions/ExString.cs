@@ -1,4 +1,5 @@
-﻿using SA2MessageTextTool.Common;
+﻿using System.Text;
+using SA2MessageTextTool.Common;
 
 namespace SA2MessageTextTool.Extensions
 {
@@ -11,11 +12,11 @@ namespace SA2MessageTextTool.Extensions
             { "Ё", "{Y}" },
         };
 
-        private static readonly Dictionary<string, string> cyrillicReplacementMap = new()
+        private static readonly Dictionary<string, string> cyrillicButtonsMap = new()
         {
-            { "№", "Ё" },
-            { "є", "ё" },
-
+            { "±", "{A}" },
+            { "¶", "{B}" },
+            { "·", "{Y}" },
         };
 
         private static string Replace(string text, Dictionary<string, string> map, TextConversionMode mode = TextConversionMode.Default)
@@ -32,14 +33,16 @@ namespace SA2MessageTextTool.Extensions
         }
 
 
-        public static string ReplaceKeyboardButtons(this string text, TextConversionMode mode = TextConversionMode.Default)
+        public static string ReplaceKeyboardButtons(this string text, Encoding encoding, TextConversionMode mode = TextConversionMode.Default)
         {
-            return Replace(text, buttonsMap, mode);
-        }
-
-        public static string ModifyCyrillicCP(this string text, TextConversionMode mode = TextConversionMode.Default)
-        {
-            return Replace(text, cyrillicReplacementMap, mode);
+            if (encoding.CodePage == (int)Encodings.Windows1251)
+            {
+                return Replace(text, cyrillicButtonsMap, mode);
+            }
+            else
+            {
+                return Replace(text, buttonsMap, mode);
+            }            
         }
     }
 }
